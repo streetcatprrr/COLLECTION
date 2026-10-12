@@ -56,6 +56,13 @@ button{font:inherit;color:inherit}
 .sel button:hover,.sel button[aria-pressed="true"]{color:var(--ink)}
 .sel button:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
 .sel button[aria-disabled="true"],.modes button[aria-disabled="true"]{color:rgba(121,121,121,.42);cursor:default}   /* sin obras: atenuado */
+/* Arriba a la derecha: «The Gallery ↵», el paso a la siguiente sección de streetcat.com (MwMA). Mismo texto que los menús (12 oct 2026). */
+.next{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:16px;z-index:5;display:flex;align-items:center;gap:8px;height:44px;padding:0;
+  color:var(--nav);font-size:18px;line-height:24px;white-space:nowrap;text-decoration:none;cursor:pointer;transition:color .3s ease,opacity .45s ease;
+  text-shadow:0 0 10px rgba(10,10,11,.9),0 0 3px rgba(10,10,11,.7)}
+.next:hover{color:var(--ink)}
+.next:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
+.next svg{flex:none;width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
 .only-mob{display:none}
 /* Móvil: cuatro renglones abajo a la derecha (Grid, Artist, Digital, Physical). El ordenador se configura más adelante. */
 @media (max-width:767px),(pointer:coarse) and (max-height:500px){
@@ -63,6 +70,7 @@ button{font:inherit;color:inherit}
   .only-mob{display:block}
   .modes{flex-direction:column;flex-wrap:nowrap;align-items:flex-end}
   .modes button{height:34px;padding:5px 0}
+  .next{height:34px}                                                      /* a la misma distancia del borde que el pie */
   .status{padding:5px 0}                                                  /* alineado con el último renglón del menú de la derecha */
   .scrim-bottom{height:calc(200px + env(safe-area-inset-bottom,0px))}
   .names{-webkit-mask-image:linear-gradient(transparent 6%,#000 26%,#000 60%,transparent 76%);mask-image:linear-gradient(transparent 6%,#000 26%,#000 60%,transparent 76%)}
@@ -102,7 +110,7 @@ button{font:inherit;color:inherit}
 
 /* ---------- Ficha: la obra (en 3D) viene al centro; debajo, título y artista; al bajar, el resto de la información.
    El fondo es la propia obra muy difuminada (se pinta en el 3D). ---------- */
-body.is-focus .foot,body.is-focus .names,body.is-focus .pill,body.is-focus .scrim{opacity:0;pointer-events:none}
+body.is-focus .foot,body.is-focus .names,body.is-focus .pill,body.is-focus .scrim,body.is-focus .next{opacity:0;pointer-events:none}
 .focus{position:fixed;inset:0;z-index:10;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none}
 .focus::-webkit-scrollbar{display:none}
 .focus[hidden]{display:none}
@@ -170,6 +178,7 @@ body.is-focus .foot,body.is-focus .names,body.is-focus .pill,body.is-focus .scri
 <div class="names" id="names" aria-hidden="true"></div>
 <div class="pill" id="pill" aria-hidden="true"></div>
 <nav class="sr" id="worklist"></nav>
+<a class="next" id="next" href="https://www.streetcat.com/the-meowma" target="_top">The Gallery<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2.5v7.5H2.5M6.5 6l-4 4 4 4"/></svg></a>
 <div class="foot">
   <div class="foot-left">
     <nav class="sel" id="sel">
@@ -234,6 +243,7 @@ const T = {
       untitled:'Untitled', medium:'Technique', format:'Format', collection:'Collection', network:'Network', contract:'Contract', token:'Token',
       asset:'Asset', creator:'Creator', links:'Links', size:'Size', edition:'Edition', pending:'Details pending',
       viewNft:'View NFT', more:'More info', close:'Close', list:'Works in the gallery', angle:'view',
+      next:'The Gallery: go to MwMA',
       nogl:'Your browser cannot display the 3D gallery.'},
   es:{gallery:'Galería', mGrid:'Cuadrícula', mNames:'Títulos', mArtist:'Artista', mType:'Digital / Física', mDig:'Digital', mPhys:'Física', modes:'Vista de la galería',
       sel:'Selección', sAll:'Todas las obras', sCol:'En nuestra colección', sLove:'Arte que amamos',
@@ -241,6 +251,7 @@ const T = {
       untitled:'Sin título', medium:'Técnica', format:'Formato', collection:'Colección', network:'Red', contract:'Contrato', token:'Token',
       asset:'Activo', creator:'Creador', links:'Enlaces', size:'Medidas', edition:'Edición', pending:'Datos pendientes',
       viewNft:'Ver NFT', more:'Más información', close:'Cerrar', list:'Obras de la galería', angle:'vista',
+      next:'The Gallery: ir a MwMA',
       nogl:'Tu navegador no puede mostrar la galería en 3D.'}
 }[LANG];
 const tx = v => v && typeof v === 'object' ? (v[LANG] || v.en || '') : (v == null ? '' : String(v));
@@ -1193,6 +1204,20 @@ function syncModes(){
 }
 modesEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { if (!b.hasAttribute('aria-disabled')) { setView(b.dataset.m); interacted(); } }));
 selEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { if (!b.hasAttribute('aria-disabled')) { setSel(b.dataset.s); interacted(); } }));
+/* «The Gallery ↵» (arriba a la derecha): la siguiente sección de streetcat.com, MwMA. Dentro de la página Collection, es la propia página
+   la que cambia de sección, igual que con su menú (mensajes 'sc-hello' → 'sc-parent' y 'sc-next'). Sola o sin respuesta, es un enlace normal. */
+const nextEl = $('next');
+nextEl.setAttribute('aria-label', T.next);
+let hostNav = false;
+if (window.parent !== window) {
+  addEventListener('message', e => { if (e.source === window.parent && e.data && e.data.type === 'sc-parent') hostNav = true; });
+  try { window.parent.postMessage({type: 'sc-hello'}, '*'); } catch (_) {}
+}
+nextEl.addEventListener('click', e => {
+  if (!hostNav || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  window.parent.postMessage({type: 'sc-next', path: new URL(nextEl.href).pathname}, '*');
+});
 
 /* ---------- Dónde está cada universo (lo mueven las transiciones) ---------- */
 for (const U of ULIST) { U.st = {px: 0, py: 0, pz: 0, rx: 0, ry: 0, rz: 0}; U.ovRows = [-1.4, .7, -1]; }
@@ -1453,7 +1478,7 @@ function endDrag(e){
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 addEventListener('wheel', e => {
-  if (FOCUS.on || e.ctrlKey || (e.target !== canvas && !(e.target.closest && e.target.closest('.foot')))) return;
+  if (FOCUS.on || e.ctrlKey || (e.target !== canvas && !(e.target.closest && e.target.closest('.foot, .next')))) return;
   e.preventDefault(); if (trans) return;
   const u = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H : 1, dX = e.deltaX * u, dY = e.deltaY * u;
   if (NM.rew) { NM.rew.kill(); NM.rew = null; }
