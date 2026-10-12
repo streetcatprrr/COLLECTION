@@ -374,7 +374,7 @@ void main(){
 const CARD_FS = `
 in vec2 vUv; in vec3 vN; in vec3 vW; in float vFace; in vec2 vNdc; in float vD;
 uniform sampler2D uTex, uPaper, uEnv;
-uniform float uAlpha, uKind, uHover, uBias, uReveal, uSpotK, uGlassK, uSheen, uTint, uDark, uWipe, uWash, uGlass;   // uKind: 0 paspartú · 1 pantalla · 2 foto a sangre
+uniform float uAlpha, uKind, uHover, uBias, uReveal, uSpotK, uGlassK, uSheen, uTint, uDark, uWipe, uWash, uGlass, uOpen;   // uOpen: es la obra abierta (ficha)   // uKind: 0 paspartú · 1 pantalla · 2 foto a sangre
 uniform vec2 uFrame, uInner, uPaperS, uFogR;
 uniform vec3 uBg, uMatCol, uFrameCol, uTintCol;
 out vec4 o;
@@ -385,7 +385,7 @@ vec3 env(vec3 R, float bias){                                          // estudi
 }
 void main(){
   vec3 L = normalize(vec3(-0.33, 0.66, 0.67));                           // luz principal: arriba a la izquierda
-  float spot = 1.0 - uSpotK * smoothstep(0.18, 1.3, length(vNdc * vec2(1.0, 0.8)));   // foco en el centro
+  float spot = 1.0 - uSpotK * (1.0 - uOpen) * smoothstep(0.18, 1.3, length(vNdc * vec2(1.0, 0.8)));   // foco en el centro (la obra abierta, iluminada por igual)
   vec3 N = normalize(vN), V = normalize(cameraPosition - vW), R = reflect(-V, N);
   float dif = max(dot(N, L), 0.0), fres = pow(1.0 - max(dot(N, V), 0.0), 5.0);
   vec3 c;
@@ -411,7 +411,7 @@ void main(){
     float glass = uKind > 1.5 ? 0.0 : uKind > 0.5 ? art : (1.0 - frame) * 0.45;
     c += env(R, uKind > 0.5 ? 0.5 : 1.5) * mix(0.05, 1.0, fres) * glass * uGlassK * uGlass;   // (la obra abierta llega sin reflejo)
     c += env(R, 3.5) * (0.05 + 0.3 * fres) * frame * uSheen;            // marco satinado
-    c *= 1.0 + 0.07 * uHover;
+    c *= 1.0 + 0.07 * uHover * (1.0 - uOpen);
     c *= 1.0 - 0.3 * uDark;                                              // más oscuras mientras esperan o en el globo
     float g = clamp(uTint * 1.6 - 0.6 + 0.6 * vUv.x, 0.0, 1.0);         // tinte plano (como el fantasma); al irse, descubre la obra de izquierda a derecha
     c = mix(c, uTintCol * (0.92 + 0.38 * smoothstep(-0.6, 1.0, vUv.x)), g);
@@ -491,7 +491,7 @@ float quadSD(vec2 p, vec2 asp){                                         // dista
 void main(){
   vec2 asp = vec2(uRes.x / uRes.y, 1.0);
   float sd = uKeepK > 0.5 ? quadSD(vUv, asp) : 1.0;
-  float keepH = uKeepK * (1.0 - smoothstep(0.0, 0.004, sd)), keepS = uKeepK * (1.0 - smoothstep(0.0, 0.07, sd));
+  float keepH = uKeepK * (1.0 - smoothstep(-0.004, 0.0, sd)), keepS = uKeepK * (1.0 - smoothstep(0.0, 0.07, sd));
   float tr = clamp(texture(uTrail, vUv).r, 0.0, 1.0) * uTrailK;         // rastro del ratón: aclara, desatura y aparta el efecto
   vec3 nz = texture(uNoise, vUv * 7.0 * asp + uTime * 0.0005).rgb;      // ruido en dos escalas, casi quieto
   vec3 nz2 = texture(uNoise, vUv * 30.0 * asp + 0.01 * vec2(sin(uTime * 0.005) + sin(uTime * 0.015), sin(uTime * 0.1) + sin(uTime * 0.04))).rgb;
@@ -501,20 +501,22 @@ void main(){
   vec2 d = uv - 0.5; float r2 = dot(d, d);
   vec2 off = d * r2 * uCA;                                              // aberración cromática leve en los bordes
   vec3 c = vec3(texture(uScene, uv - off).r, texture(uScene, uv).g, texture(uScene, uv + off).b);
-  c += texture(uBloom, uv).rgb * uBloomK;                               // resplandor de los blancos
+  c += texture(uBloom, uv).rgb * uBloomK * (1.0 - keepH);              // resplandor de los blancos (la obra abierta, sin él: se ve tal cual)
   vec2 q = (vUv - 0.5) * asp;
-  c += uGlowCol * exp(-dot(q, q) * 2.6) * uGlow;                        // charco de luz del foco
-  float bl = smoothstep(0.8, 0.95, nz2.b) * uSpeck + smoothstep(0.6, 0.75, nz.b) * dsp * smoothstep(0.26, 0.55, nz2.g) * (1.0 - tr) * (1.0 - keepH);
+  c += uGlowCol * exp(-dot(q, q) * 2.6) * uGlow * (1.0 - keepH);       // charco de luz del foco
+  float bl = smoothstep(0.8, 0.95, nz2.b) * uSpeck * (1.0 - keepH) + smoothstep(0.6, 0.75, nz.b) * dsp * smoothstep(0.26, 0.55, nz2.g) * (1.0 - tr) * (1.0 - keepH);
   c = mix(c, c * smoothstep(0.2, 0.7, nz.r * 10.5), bl);               // motas; con la desaparición, manchas oscuras
-  c = mix(c, mix(vec3(dot(c, vec3(0.2125, 0.7154, 0.0721))), c, 0.55) * 1.05, tr);
+  c = mix(c, mix(vec3(dot(c, vec3(0.2125, 0.7154, 0.0721))), c, 0.55) * 1.05, tr * (1.0 - keepH));
   c = mix(c, c * 0.15, uDim * (1.0 - keepH));                          // y luego todo lo demás se hunde en la oscuridad
-  c *= mix(1.0 - uVig, 1.0, smoothstep(0.98, 0.16, length(q * vec2(0.82, 1.0))));   // viñeta
+  c *= mix(mix(1.0 - uVig, 1.0, smoothstep(0.98, 0.16, length(q * vec2(0.82, 1.0)))), 1.0, keepH);   // viñeta
   c = clamp(c, 0.0, 1.0);
+  vec3 raw = c;
   c = mix(c, c * c * (3.0 - 2.0 * c), 0.28);                             // curva en S suave
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c *= mix(vec3(0.985, 0.995, 1.012), vec3(1.018, 1.0, 0.968), smoothstep(0.25, 0.95, l));   // sombras frías, luces cálidas
   float g = h12(vUv * uRes + fract(uTime * 7.13) * 917.0) - 0.5;
   c += g * uGrain * (0.5 + 0.5 * (1.0 - abs(l * 2.0 - 1.0)));           // grano de película
+  c = mix(c, raw, keepH);                                               // la obra abierta conserva sus colores, sin curva ni grano
   o = vec4(mix(c, uBg, uFade), 1.0);
 }`;
 
@@ -619,7 +621,7 @@ const PREMUL = {transparent: true, blending: THREE.CustomBlending, blendSrc: THR
 const cardMaterial = () => new THREE.ShaderMaterial({glslVersion: THREE.GLSL3, vertexShader: CARD_VS, fragmentShader: CARD_FS, ...PREMUL, depthWrite: true,
   uniforms: {...SU, uTex: {value: WHITE}, uAlpha: {value: 1}, uKind: {value: 0}, uHover: {value: 0}, uBias: {value: 0}, uReveal: {value: 0},
     uFrame: {value: new THREE.Vector2()}, uInner: {value: new THREE.Vector2()}, uPaperS: {value: new THREE.Vector2()}, uFrameCol: {value: new THREE.Vector3()},
-    uTint: {value: 0}, uDark: {value: 0}, uWipe: {value: 0}, uWash: {value: 0}, uGlass: {value: 1}, uTintCol: {value: new THREE.Vector3(.6, .6, .6)}}});
+    uTint: {value: 0}, uDark: {value: 0}, uWipe: {value: 0}, uWash: {value: 0}, uGlass: {value: 1}, uOpen: {value: 0}, uTintCol: {value: new THREE.Vector3(.6, .6, .6)}}});
 const flatMaterial = (tex, col, alpha) => new THREE.ShaderMaterial({glslVersion: THREE.GLSL3, vertexShader: FLAT_VS, fragmentShader: FLAT_FS, ...PREMUL, depthWrite: false,
   uniforms: {uSpotK: SU.uSpotK, uFogR: SU.uFogR, uBg: SU.uBg, uRes: SU.uRes, uTex: {value: tex || WHITE}, uColor: {value: new THREE.Vector4(...(col || [.95, .94, .92]), 1)},
     uAlpha: {value: alpha == null ? 1 : alpha}, uBias: {value: 0}, uAtt: {value: 0}}});
@@ -1058,6 +1060,7 @@ function stepParts(dt, push){
 /* ---------- Pintar un fotograma ---------- */
 const PO = {x: 0, y: 0, z: 0, rx: 0, ry: 0, s: 1};
 const MT = new THREE.Matrix4(), V3 = new THREE.Vector3();
+const clearDepth = r => r.clearDepth(), noop = () => {};                 // la obra abierta, por encima de sus vecinas (en las filas, el cilindro las acerca)
 let focusU = null, focusT = null;                                          // obra abierta (ficha)
 function render(t, dt){
   frameNo++; capBudget = 3;
@@ -1108,6 +1111,7 @@ function render(t, dt){
         else if (img && img.state === 1) { tex = img.tex; reveal = smooth(0, 500, tnow - img.born); }
         u.uTex.value = tex; u.uAlpha.value = alpha; u.uKind.value = w.frame === 'screen' ? 1 : w.frame === 'bare' ? 2 : 0; u.uHover.value = tl.hov; u.uReveal.value = reveal;
         u.uTint.value = P.tint; u.uDark.value = P.dark; u.uWipe.value = 0; u.uWash.value = foc ? 0 : FOCUS.wash; u.uGlass.value = foc ? 1 - FOCUS.clean : 1;
+        u.uOpen.value = foc ? FOCUS.clean : 0; m.renderOrder = foc ? 10 : 0; m.onBeforeRender = foc ? clearDepth : noop;   // nada se pinta encima de la obra abierta
         u.uBias.value = trans ? Math.sin(PI * trans.p) * 1.6 : 0;          // un poco de desenfoque durante el cambio de vista
         u.uFrame.value.set(d.fu, d.fv); u.uInner.value.set(d.iu, d.iv); u.uPaperS.value.set(d.cw * 2.2, d.ch * 2.2);
         if (w.frame === 'screen') u.uFrameCol.value.set(.05, .05, .055); else if (w.frame === 'bare') u.uFrameCol.value.set(.07, .07, .07); else u.uFrameCol.value.set(.11, .105, .1);
@@ -1151,7 +1155,7 @@ function render(t, dt){
   // la obra abierta se libra de la «desaparición»: su contorno en pantalla va al último paso
   const fu = PM.fin.uniforms; fu.uFrost.value = RM ? 0 : FOCUS.frost; fu.uDim.value = RM ? 0 : FOCUS.dim; fu.uKeepK.value = 0;
   if (focusT && focusT.mesh.visible && (FOCUS.frost > .001 || FOCUS.dim > .001)) {
-    const M = focusT.mesh.matrixWorld.elements, k = 1.03, c = [corner(M, -.5 * k, -.5 * k, .5), corner(M, .5 * k, -.5 * k, .5), corner(M, .5 * k, .5 * k, .5), corner(M, -.5 * k, .5 * k, .5)];
+    const M = focusT.mesh.matrixWorld.elements, k = 1, c = [corner(M, -.5 * k, -.5 * k, .5), corner(M, .5 * k, -.5 * k, .5), corner(M, .5 * k, .5 * k, .5), corner(M, -.5 * k, .5 * k, .5)];
     if (c.every(p => p[2] > .05)) {
       fu.uKeepA.value.set(c[0][0] / W, 1 - c[0][1] / H, c[1][0] / W, 1 - c[1][1] / H); fu.uKeepB.value.set(c[2][0] / W, 1 - c[2][1] / H, c[3][0] / W, 1 - c[3][1] / H); fu.uKeepK.value = 1;
     }
