@@ -1939,3 +1939,20 @@ if (HASH.has('debug')) window.__g = {hits: () => hits, su: SU, fx: (f, d, w) => 
 gsap.ticker.add(tick);
 })();
 </script>
+
+<script>
+// Avisa a la página que aloja la galería (streetcat.com) de cuándo hay una ficha al frente,
+// para que esconda su menú igual que el corazón y el chat. El iframe es de otro dominio: va por postMessage.
+(function(){
+  if (window.self === window.top) return;
+  var last = null;
+  function tell(){
+    var on = document.body.classList.contains('is-focus');
+    if (on === last) return;
+    last = on;
+    parent.postMessage({streetcat: 'ficha', open: on}, '*');
+  }
+  new MutationObserver(tell).observe(document.body, {attributes: true, attributeFilter: ['class']});
+  tell();
+})();
+</script>
