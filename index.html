@@ -183,9 +183,8 @@ body.is-focus .foot,body.is-focus .names,body.is-focus .pill,body.is-focus .scri
     <button type="button" data-m="grid" aria-pressed="true" data-t="mGrid">Grid</button>
     <button type="button" class="only-desk" data-m="names" aria-pressed="false" data-t="mNames">Titles</button>
     <button type="button" class="only-mob" data-m="names" aria-pressed="false" data-t="mArtist">Artist</button>
-    <button type="button" class="only-desk" data-m="type" aria-pressed="false" data-t="mType">Digital / Physical</button>
-    <button type="button" class="only-mob" data-m="digital" aria-pressed="false" data-t="mDig">Digital</button>
-    <button type="button" class="only-mob" data-m="physical" aria-pressed="false" data-t="mPhys">Physical</button>
+    <button type="button" data-m="digital" aria-pressed="false" data-t="mDig">Digital</button>
+    <button type="button" data-m="physical" aria-pressed="false" data-t="mPhys">Physical</button>
   </nav>
 </div>
 <div class="focus" id="focus" hidden role="dialog" aria-modal="true" aria-labelledby="fTitle">
@@ -251,7 +250,7 @@ const pad2 = n => String(n).padStart(2, '0');
    frame: 'screen' (bisel negro fino, de pantalla) · 'mat' (paspartú blanco) · 'bare' (foto a sangre, sin paspartú ni cristal) ---------- */
 const CATS = {                                                            // cls: 0 digital · 1 física
   handmade:  {cls: 0, frame: 'screen', en: ['Handmade', 'Handmade'],          es: ['A mano', 'Hecho a mano']},   // digital pintado o dibujado por el artista (12 oct 2026)
-  image:     {cls: 0, frame: 'screen', en: ['Still', 'Still image'],          es: ['Imagen fija', 'Imagen fija']},   // sin confirmar cómo está hecho: por formato
+  image:     {cls: 0, frame: 'screen', en: ['Image', 'Image'],                es: ['Imagen', 'Imagen']},   // sin confirmar cómo está hecho: por formato
   animation: {cls: 0, frame: 'screen', en: ['Animation', 'Animation'],        es: ['Animación', 'Animación']},
   generative: {cls: 0, frame: 'screen', en: ['Generative', 'Generative'],     es: ['Generativo', 'Generativo']},     // código o algoritmo; sin grupo de IA
   painting_physical: {cls: 1, frame: 'mat', en: ['Painting', 'Painting'],     es: ['Pintura', 'Pintura']},       // física: por técnica (12 oct 2026)
@@ -883,10 +882,10 @@ function resize(){
 
 /* ======================= Vistas: tres «universos» dentro de cilindros (mecánica estudiada en 100 Lost Species) =======================
    Grid: tres anillos alrededor de la cámara · Artist: un tambor vertical · Digital / Physical: dos anillos con rótulos.
-   Ordenador: Grid · Titles · Digital / Physical. Móvil: Grid · Artist · Digital · Physical. */
+   Ordenador: Grid · Titles · Digital · Physical. Móvil: Grid · Artist · Digital · Physical (desde el 12 oct 2026, Digital y Física van por separado también en el ordenador). */
 const MOBILE = matchMedia('(max-width:767px),(pointer:coarse) and (max-height:500px)');   // mismo corte que el CSS del menú
 // el menú es siempre el mismo; una vista sin obras en la selección activa no se abre (su botón se atenúa)
-const viewsNow = () => MOBILE.matches ? ['grid', 'names', 'digital', 'physical'] : ['grid', 'names', 'type'];
+const viewsNow = () => ['grid', 'names', 'digital', 'physical'];
 const viewCount = v => v === 'digital' ? BYTYPE[0].length : v === 'physical' ? BYTYPE[1].length : N;
 const isRows = v => v === 'type' || v === 'digital' || v === 'physical';
 const rowGroups = mode => mode === 'digital' ? BYCAT[0] : BYCAT[1];
@@ -1303,7 +1302,7 @@ function rebuildAll(mode){                                                // den
   setHover(null);
   UNI.names.cfg.radius = UNI.names.p.radius = namesRadius();
   UNI.grid.build('grid'); UNI.names.build('names');
-  const rm = mode || (UNI.rows.mode && viewCount(UNI.rows.mode) ? UNI.rows.mode : !MOBILE.matches ? 'type' : viewCount('digital') ? 'digital' : 'physical');
+  const rm = mode || (UNI.rows.mode && viewCount(UNI.rows.mode) ? UNI.rows.mode : viewCount('digital') ? 'digital' : 'physical');
   UNI.rows.build(rm);
   NM.cur = NM.target = 0; for (const o of NAMES) o.i = null;
   GR.ix = GR.vx = RW.ix = RW.vx = 0;
@@ -1884,7 +1883,7 @@ if (window.visualViewport) visualViewport.addEventListener('resize', checkSize);
 if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => relayoutFocus());   // si la tipografía llega tarde, la ficha se vuelve a medir
 resize(); measureNames(); initParts(); setPlay(autoplay);
 // vista de arranque por ancla (#titles, #artist, #type, #digital, #physical), adaptada al menú de móvil u ordenador
-const fitView = v => MOBILE.matches ? (v === 'type' ? 'digital' : v) : (v === 'digital' || v === 'physical' ? 'type' : v);
+const fitView = v => v === 'type' ? 'digital' : v;                      // #type (vista antigua «Digital / Física») abre Digital
 const askedView = fitView(HASH.has('titles') || HASH.has('titulos') || HASH.has('artist') ? 'names' : (HASH.has('type') || HASH.has('tipo')) ? 'type'
   : HASH.has('digital') ? 'digital' : HASH.has('physical') || HASH.has('fisica') ? 'physical' : 'grid');
 const startView = viewCount(askedView) ? askedView : 'grid';
@@ -1905,7 +1904,7 @@ CAM.z = camOv();
   const fonts = initText();
   frontWorks(uniOf(startView) === UNI.rows ? UNI.grid : uniOf(startView)).forEach(k => wantImage(k));
   await fonts;                                                            // los rótulos de las filas miden con la tipografía ya cargada
-  UNI.rows.build(isRows(startView) ? startView : !MOBILE.matches ? 'type' : viewCount('digital') ? 'digital' : 'physical');
+  UNI.rows.build(isRows(startView) ? startView : viewCount('digital') ? 'digital' : 'physical');
   const first = frontWorks(uniOf(startView)); first.forEach(k => wantImage(k));
   const t0 = performance.now();
   while (performance.now() - t0 < 1800 && first.some(k => { const e = IMGS.get(k); return !e || e.state !== 1; })) await new Promise(r => setTimeout(r, 60));
