@@ -1940,18 +1940,25 @@ gsap.ticker.add(tick);
 </script>
 
 <script>
-// Avisa a la página que aloja la galería (streetcat.com) de cuándo hay una ficha al frente,
-// para que esconda su menú igual que el corazón y el chat. El iframe es de otro dominio: va por postMessage.
+// Avisa a la página que aloja la galería (streetcat.com) de cuándo hay una ficha al frente y de si se ha llegado
+// al final de la ficha (pasado el botón del NFT), para que esconda su menú móvil y lo deje volver abajo del todo.
+// El iframe es de otro dominio: va por postMessage.
 (function(){
   if (window.self === window.top) return;
-  var last = null;
+  var focusEl = document.getElementById('focus'), last = '';
+  function atEnd(){
+    if (!focusEl || focusEl.hidden) return false;
+    return focusEl.scrollTop + focusEl.clientHeight >= focusEl.scrollHeight - 24;
+  }
   function tell(){
-    var on = document.body.classList.contains('is-focus');
-    if (on === last) return;
-    last = on;
-    parent.postMessage({streetcat: 'ficha', open: on}, '*');
+    var open = document.body.classList.contains('is-focus'), end = open && atEnd(), key = open + '/' + end;
+    if (key === last) return;
+    last = key;
+    parent.postMessage({streetcat: 'ficha', open: open, end: end}, '*');
   }
   new MutationObserver(tell).observe(document.body, {attributes: true, attributeFilter: ['class']});
+  if (focusEl) focusEl.addEventListener('scroll', tell, {passive: true});
+  addEventListener('resize', tell);
   tell();
 })();
 </script>
