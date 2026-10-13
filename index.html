@@ -237,7 +237,7 @@ const ARTISTS = {};          // web o red social de cada artista: {"Nombre": "ht
 const HASH = new Set(decodeURIComponent(location.hash.slice(1)).toLowerCase().split(/[.\-_]/).filter(Boolean));
 const LANG = HASH.has('es') ? 'es' : HASH.has('en') ? 'en' : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
 const T = {
-  en:{gallery:'Gallery', mGrid:'Grid', mNames:'Titles', mArtist:'Artist', mType:'Digital / Physical', mDig:'Digital', mPhys:'Physical', modes:'Gallery view',
+  en:{gallery:'Gallery', section:'Collection', mGrid:'Grid', mNames:'Titles', mArtist:'Artist', mType:'Digital / Physical', mDig:'Digital', mPhys:'Physical', modes:'Gallery view',
       sel:'Selection', sAll:'All Works', sCol:'In Our Collection', sLove:'Art We Love',
       view:'View work', works:'works', work:'work', nDig:['digital', 'digital'], nPhys:['physical', 'physical'],
       untitled:'Untitled', medium:'Technique', format:'Format', collection:'Collection', network:'Network', contract:'Contract', token:'Token',
@@ -245,7 +245,7 @@ const T = {
       viewNft:'View NFT', more:'More info', close:'Close', list:'Works in the gallery', angle:'view',
       next:'The Gallery: go to MwMA',
       nogl:'Your browser cannot display the 3D gallery.'},
-  es:{gallery:'Galería', mGrid:'Cuadrícula', mNames:'Títulos', mArtist:'Artista', mType:'Digital / Física', mDig:'Digital', mPhys:'Física', modes:'Vista de la galería',
+  es:{gallery:'Galería', section:'Colección', mGrid:'Cuadrícula', mNames:'Títulos', mArtist:'Artista', mType:'Digital / Física', mDig:'Digital', mPhys:'Física', modes:'Vista de la galería',
       sel:'Selección', sAll:'Todas las obras', sCol:'En nuestra colección', sLove:'Arte que amamos',
       view:'Ver obra', works:'obras', work:'obra', nDig:['digital', 'digitales'], nPhys:['física', 'físicas'],
       untitled:'Sin título', medium:'Técnica', format:'Formato', collection:'Colección', network:'Red', contract:'Contrato', token:'Token',
@@ -1380,7 +1380,7 @@ function setView(v, intro, rebuild){
   if (intro) tl.to(FX, {dev: 0, duration: IN, ease: 'power1.inOut'}, T1 + .2);
   tl.to(LOOK, {ix: to.cfg.infl[0], iy: to.cfg.infl[1], duration: 1.5, ease: 'power1.inOut'}, T1 + IN * .3);
   // el intertítulo: el nombre de la vista (o de la selección), en grande, sobre el negro. Todas las letras a la vez y ya en su sitio: solo se enfoca y se funde
-  const spans = bigSet(rebuild ? selLabel(SEL) : labelFor(v));
+  const spans = bigSet(rebuild ? selLabel(SEL) : intro ? T.section : labelFor(v));   // en la entrada, el nombre de la sección (Collection), no el de la vista
   const lin = intro ? .25 : OUT * .45, lout = intro ? 1.3 : T1 + IN * .25;
   tl.fromTo(spans, {opacity: 0, yPercent: 0, filter: 'blur(10px)'}, {opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: .9, ease: E.cubicOut}, lin);
   tl.to(spans, {opacity: 0, yPercent: 0, filter: 'blur(8px)', duration: .8, ease: E.cubicInOut}, lout);
