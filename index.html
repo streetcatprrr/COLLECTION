@@ -1379,11 +1379,11 @@ function setView(v, intro, rebuild){
   tl.to(FX, {focus: 0, duration: IN, ease: E.cubicOut}, T1);
   if (intro) tl.to(FX, {dev: 0, duration: IN, ease: 'power1.inOut'}, T1 + .2);
   tl.to(LOOK, {ix: to.cfg.infl[0], iy: to.cfg.infl[1], duration: 1.5, ease: 'power1.inOut'}, T1 + IN * .3);
-  // el intertítulo: el nombre de la vista (o de la selección), en grande, letra a letra, sobre el negro
+  // el intertítulo: el nombre de la vista (o de la selección), en grande, sobre el negro. Todas las letras a la vez y ya en su sitio: solo se enfoca y se funde
   const spans = bigSet(rebuild ? selLabel(SEL) : labelFor(v));
   const lin = intro ? .25 : OUT * .45, lout = intro ? 1.3 : T1 + IN * .25;
-  tl.fromTo(spans, {opacity: 0, yPercent: 24, filter: 'blur(10px)'}, {opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: .9, ease: E.cubicOut, stagger: .035}, lin);
-  tl.to(spans, {opacity: 0, yPercent: -14, filter: 'blur(8px)', duration: .8, ease: E.cubicInOut, stagger: .02}, lout);
+  tl.fromTo(spans, {opacity: 0, yPercent: 0, filter: 'blur(10px)'}, {opacity: 1, yPercent: 0, filter: 'blur(0px)', duration: .9, ease: E.cubicOut}, lin);
+  tl.to(spans, {opacity: 0, yPercent: 0, filter: 'blur(8px)', duration: .8, ease: E.cubicInOut}, lout);
   if (RM) tl.progress(1);
 }
 
