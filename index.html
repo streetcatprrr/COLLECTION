@@ -63,6 +63,7 @@ button{font:inherit;color:inherit}
 .next:hover{color:var(--ink)}
 .next:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
 .next svg{flex:none;width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.next2{top:calc(52px + env(safe-area-inset-top,0px))}                      /* «What We Do ↵», segundo renglón (14 oct 2026) */
 .only-mob{display:none}
 /* Móvil: cuatro renglones abajo a la derecha (Grid, Artist, Digital, Physical). El ordenador se configura más adelante. */
 @media (max-width:767px),(pointer:coarse) and (max-height:500px){
@@ -71,6 +72,7 @@ button{font:inherit;color:inherit}
   .modes{flex-direction:column;flex-wrap:nowrap;align-items:flex-end}
   .modes button{height:34px;padding:5px 0}
   .next{height:34px}                                                      /* a la misma distancia del borde que el pie */
+  .next2{top:calc(42px + env(safe-area-inset-top,0px))}
   .status{padding:5px 0}                                                  /* alineado con el último renglón del menú de la derecha */
   .scrim-bottom{height:calc(200px + env(safe-area-inset-bottom,0px))}
   .names{-webkit-mask-image:linear-gradient(transparent 6%,#000 26%,#000 60%,transparent 76%);mask-image:linear-gradient(transparent 6%,#000 26%,#000 60%,transparent 76%)}
@@ -179,6 +181,7 @@ body.is-focus .foot,body.is-focus .names,body.is-focus .pill,body.is-focus .scri
 <div class="pill" id="pill" aria-hidden="true"></div>
 <nav class="sr" id="worklist"></nav>
 <a class="next" id="next" href="https://www.streetcat.com/the-meowma" target="_top">The Gallery<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2.5v7.5H2.5M6.5 6l-4 4 4 4"/></svg></a>
+<a class="next next2" id="next2" href="https://www.streetcat.com/what-we-do" target="_top">What We Do<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M14 2.5v7.5H2.5M6.5 6l-4 4 4 4"/></svg></a>
 <div class="foot">
   <div class="foot-left">
     <nav class="sel" id="sel">
@@ -243,7 +246,7 @@ const T = {
       untitled:'Untitled', medium:'Technique', format:'Format', collection:'Collection', network:'Network', contract:'Contract', token:'Token',
       asset:'Asset', creator:'Creator', links:'Links', size:'Size', edition:'Edition', pending:'Details pending',
       viewNft:'View NFT', more:'More info', close:'Close', list:'Works in the gallery', angle:'view',
-      next:'The Gallery: go to MwMA',
+      next:'The Gallery: go to MwMA', next2:'What We Do: go to What We Do',
       nogl:'Your browser cannot display the 3D gallery.'},
   es:{gallery:'Galería', section:'Colección', mGrid:'Cuadrícula', mNames:'Títulos', mArtist:'Artista', mType:'Digital / Física', mDig:'Digital', mPhys:'Física', modes:'Vista de la galería',
       sel:'Selección', sAll:'Todas las obras', sCol:'En nuestra colección', sLove:'Arte que amamos',
@@ -251,7 +254,7 @@ const T = {
       untitled:'Sin título', medium:'Técnica', format:'Formato', collection:'Colección', network:'Red', contract:'Contrato', token:'Token',
       asset:'Activo', creator:'Creador', links:'Enlaces', size:'Medidas', edition:'Edición', pending:'Datos pendientes',
       viewNft:'Ver NFT', more:'Más información', close:'Cerrar', list:'Obras de la galería', angle:'vista',
-      next:'The Gallery: ir a MwMA',
+      next:'The Gallery: ir a MwMA', next2:'What We Do: ir a What We Do',
       nogl:'Tu navegador no puede mostrar la galería en 3D.'}
 }[LANG];
 const tx = v => v && typeof v === 'object' ? (v[LANG] || v.en || '') : (v == null ? '' : String(v));
@@ -1213,17 +1216,18 @@ modesEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () =
 selEl.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { if (!b.hasAttribute('aria-disabled')) { setSel(b.dataset.s); interacted(); } }));
 /* «The Gallery ↵» (arriba a la derecha): la siguiente sección de streetcat.com, MwMA. Dentro de la página Collection, es la propia página
    la que cambia de sección, igual que con su menú (mensajes 'sc-hello' → 'sc-parent' y 'sc-next'). Sola o sin respuesta, es un enlace normal. */
-const nextEl = $('next');
+const nextEl = $('next'), next2El = $('next2');                          // «What We Do ↵» debajo, mismo mecanismo (14 oct 2026)
 nextEl.setAttribute('aria-label', T.next);
+next2El.setAttribute('aria-label', T.next2);
 let hostNav = false;
 if (window.parent !== window) {
   addEventListener('message', e => { if (e.source === window.parent && e.data && e.data.type === 'sc-parent') hostNav = true; });
   try { window.parent.postMessage({type: 'sc-hello'}, '*'); } catch (_) {}
 }
-nextEl.addEventListener('click', e => {
+for (const a of [nextEl, next2El]) a.addEventListener('click', e => {
   if (!hostNav || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   e.preventDefault();
-  window.parent.postMessage({type: 'sc-next', path: new URL(nextEl.href).pathname}, '*');
+  window.parent.postMessage({type: 'sc-next', path: new URL(a.href).pathname}, '*');
 });
 
 /* ---------- Dónde está cada universo (lo mueven las transiciones) ---------- */
