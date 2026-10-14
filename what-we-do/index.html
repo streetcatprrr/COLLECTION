@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&text=%E2%89%88&display=swap">
 <style>
-/* What We Do · v1.5 (14 oct 2026). One black screen per figure: number in the upper centre, concept under it,
+/* What We Do · v1.6 (14 oct 2026). One black screen per figure: number in the upper centre, concept under it,
    period written once and kept. Cormorant Garamond throughout. «Collection ↵» top right and the last tap lead on
    to Collection through a frosted fade. */
 :root{
@@ -19,7 +19,6 @@
   --paper-dim:rgba(243,241,236,.84);
   --paper-faint:rgba(243,241,236,.5);
   --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
-  --top:0px;                       /* height of the site header above this frame (passed by the page), to centre on the real screen */
   color-scheme:dark;
 }
 html,body{height:100%;margin:0}
@@ -47,15 +46,16 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
 .next:hover{color:var(--paper)}
 .next:focus-visible{outline:1px solid var(--paper);outline-offset:4px}
 .next svg{flex:none;width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
-/* Mobile: the digits rest on the middle line of the phone screen (the frame sits under the site header, so that line is
-   half the header height above the frame's own middle); the concept starts 9.5% of the height below them and the
-   period the same distance below the concept, so the concept is the midpoint. The pixel offsets cancel the leading
-   of each line box. */
+/* Mobile: one lockup, read as a single sentence. The free area is the frame minus the site's row of icons at the bottom
+   (about 80 px); the digits' baseline sits on the optical centre of that area (47% down), the concept hangs 0.3 of the
+   number's size below the baseline and the period 0.17 below the concept, as its caption. The pixel offsets cancel the
+   leading of each line box; the vw values follow the number's size (34vw). */
 @media (max-width:767px){
+  .stage{--anchor:calc((100% - 80px - env(safe-area-inset-bottom,0px)) * .47)}
   .block{top:0;bottom:0;transform:none}
-  .num{position:absolute;left:0;right:0;bottom:calc(50% + var(--top) / 2 - 17px)}
-  .concept{position:absolute;left:0;right:0;top:calc(50% - var(--top) / 2 + 9.5vh - 6px);margin:0 auto;max-width:28ch}
-  .period{top:calc(50% - var(--top) / 2 + 19vh + 4px);bottom:auto}
+  .num{position:absolute;left:0;right:0;top:calc(var(--anchor) - .769em)}
+  .concept{position:absolute;left:0;right:0;top:calc(var(--anchor) + 10.2vw - 6px);margin:0 auto;max-width:28ch}
+  .period{top:calc(var(--anchor) + 16vw + 4px);bottom:auto}
   .next{height:34px}
 }
 .grain{position:fixed;inset:-60%;pointer-events:none;opacity:.07;z-index:3;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .7 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:280px 280px;animation:grain 1.1s steps(6) infinite}
@@ -90,10 +90,6 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
   const q = new URLSearchParams(location.search).get('lang') || (location.hash || '').slice(1);
   const lang = /^es/i.test(q || '') ? 'es' : 'en';
   document.documentElement.lang = lang;
-  // Height of the site header above this frame: first from ?top=, then live from the page ('sc-top'), so the middle line is the phone's.
-  const setTop = v => document.documentElement.style.setProperty('--top', Math.max(0, Math.round(+v || 0)) + 'px');
-  setTop(new URLSearchParams(location.search).get('top'));
-  addEventListener('message', e => { if (e.source === window.parent && e.data && e.data.type === 'sc-top') setTop(e.data.top); });
   const NEXT = { en: { label: 'Collection', aria: 'Collection: go to the gallery' }, es: { label: 'Colección', aria: 'Colección: ir a la galería' } }[lang];
   const nextEl = document.getElementById('next');
   nextEl.firstChild.textContent = NEXT.label;
