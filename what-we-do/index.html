@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&text=%E2%89%88&display=swap">
 <style>
-/* What We Do · v1.11 (14 oct 2026). One black screen per figure: number in the upper centre, concept under it,
+/* What We Do · v1.12 (14 oct 2026). One black screen per figure: number in the upper centre, concept under it,
    period written once and kept. Cormorant Garamond throughout. «Donate ↵» top right and the last tap lead on
    to Donate through a frosted fade. */
 :root{
@@ -31,12 +31,14 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
 .num span{display:inline-block;opacity:0;filter:blur(12px);will-change:opacity,filter}
 .num .sym{font-size:.56em;position:relative;top:-.28em;margin-right:.04em;color:var(--paper-dim)}
 .concept{font-weight:400;font-size:clamp(22px,5.6vw,40px);line-height:1.15;margin:clamp(14px,3vw,26px) auto 0;max-width:22ch;text-wrap:balance;color:var(--paper-dim);opacity:0;filter:blur(10px)}
-/* The period writes itself once: each glyph's outline is traced with a fine stroke, then inks in. */
+/* The period writes itself once: each glyph's outline is traced with a fine stroke, then inks in. From then on it stays,
+   and every time a figure and its concept have appeared the same stroke runs again over the inked letters (a glint). */
 .period{position:absolute;left:16px;width:calc(100% - 32px);bottom:calc(env(safe-area-inset-bottom,0px) + 36px);height:1.7em;display:block;overflow:visible;font-size:clamp(16px,4.2vw,20px)}
 .period text{font-family:var(--serif);font-style:italic;font-weight:400;font-size:inherit;letter-spacing:.02em;fill:var(--paper-faint);stroke:var(--paper-faint);stroke-width:.6px;stroke-linejoin:round}
 .period tspan{fill-opacity:0;stroke-opacity:0;stroke-dasharray:170;stroke-dashoffset:170}
 .period.draw tspan{animation:draw 1.7s cubic-bezier(.3,.5,.3,1) calc(var(--i)*.11s) forwards,ink .9s ease-out calc(var(--i)*.11s + .9s) forwards}
-.period.plain tspan{fill-opacity:1}
+.period.plain tspan,.period.inked tspan{fill-opacity:1}
+.period.glint tspan{animation:draw 1.7s cubic-bezier(.3,.5,.3,1) calc(var(--i)*.11s) forwards}
 @keyframes draw{0%{stroke-dashoffset:170;stroke-opacity:1}66%{stroke-dashoffset:0;stroke-opacity:1}100%{stroke-dashoffset:0;stroke-opacity:0}}
 @keyframes ink{from{fill-opacity:0}to{fill-opacity:1}}
 /* Top right: «Donate ↵», the way on to the next section, in the same place, letter and grey as «The Gallery ↵» in Collection. */
@@ -140,6 +142,13 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     if (RM) { period.classList.add('plain'); period.style.opacity = 0; fadeIn(period, 700, 0); return; }
     period.classList.add('draw');
   }
+  // The stroke runs again over the inked letters; the fill is kept by .inked so nothing blinks.
+  function glintPeriod() {
+    if (!periodDone || RM) return;
+    period.classList.add('inked'); period.classList.remove('draw', 'glint');
+    void period.getBoundingClientRect();
+    period.classList.add('glint');
+  }
   // A single soft glint when the last digit lands: the figure brightens and settles, like a print catching light.
   const glint = el => el.animate(
     [{ color: '#f3f1ec', textShadow: '0 0 0 rgba(255,255,255,0)', offset: 0 },
@@ -172,6 +181,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     t += T.pause;
     at(t, () => fadeIn(concept, T.cIn, 10));
     if (periodDone) {
+      at(t + T.cIn, glintPeriod);
       t += T.cIn + T.hold + 600;
     } else {
       t += T.pGap;
