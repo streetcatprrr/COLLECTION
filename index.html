@@ -42,9 +42,10 @@ button{font:inherit;color:inherit}
   justify-content:space-between;gap:16px;z-index:5;pointer-events:none;transition:opacity .45s ease}
 .foot>*{pointer-events:auto}
 .info{flex:none;margin:0;font-size:18px;line-height:24px;pointer-events:none}
-.status{display:block;padding:10px 0;color:var(--ink);white-space:nowrap;font-variant-numeric:lining-nums}
-.modes{display:flex;flex-wrap:wrap;justify-content:flex-end;column-gap:22px;margin:0}
-.modes button{height:44px;padding:0;border:0;background:none;color:var(--nav);font-size:18px;line-height:24px;white-space:nowrap;cursor:pointer;transition:color .3s ease}
+.status{display:block;padding:5px 0;color:var(--ink);white-space:nowrap;font-variant-numeric:lining-nums}   /* alineado con el último renglón del menú de la derecha */
+/* Abajo a la derecha, en renglones como el menú de la izquierda (Grid · Artist · Digital · Physical); en el ordenador desde el 16 oct 2026, antes en fila */
+.modes{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:flex-end;margin:0}
+.modes button{height:34px;padding:5px 0;border:0;background:none;color:var(--nav);font-size:18px;line-height:24px;white-space:nowrap;cursor:pointer;transition:color .3s ease}
 .modes button,.status{text-shadow:0 0 10px rgba(10,10,11,.9),0 0 3px rgba(10,10,11,.7)}   /* legibles aunque pase una obra clara por detrás */
 .modes button:hover,.modes button[aria-pressed="true"]{color:var(--ink)}
 .modes button:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
@@ -64,14 +65,11 @@ button{font:inherit;color:inherit}
 .next:focus-visible{outline:1px solid var(--ink);outline-offset:4px}
 .next svg{flex:none;width:14px;height:14px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
 .only-mob{display:none}
-/* Móvil: cuatro renglones abajo a la derecha (Grid, Artist, Digital, Physical). El ordenador se configura más adelante. */
+/* Móvil */
 @media (max-width:767px),(pointer:coarse) and (max-height:500px){
   .only-desk{display:none}
   .only-mob{display:block}
-  .modes{flex-direction:column;flex-wrap:nowrap;align-items:flex-end}
-  .modes button{height:34px;padding:5px 0}
   .next{height:34px}                                                      /* a la misma distancia del borde que el pie */
-  .status{padding:5px 0}                                                  /* alineado con el último renglón del menú de la derecha */
   .scrim-bottom{height:calc(200px + env(safe-area-inset-bottom,0px))}
   .names{-webkit-mask-image:linear-gradient(transparent 6%,#000 26%,#000 60%,transparent 76%);mask-image:linear-gradient(transparent 6%,#000 26%,#000 60%,transparent 76%)}
 }
@@ -190,8 +188,7 @@ body.is-focus .foot,body.is-focus .names,body.is-focus .pill,body.is-focus .scri
   </div>
   <nav class="modes" id="modes">
     <button type="button" data-m="grid" aria-pressed="true" data-t="mGrid">Grid</button>
-    <button type="button" class="only-desk" data-m="names" aria-pressed="false" data-t="mNames">Titles</button>
-    <button type="button" class="only-mob" data-m="names" aria-pressed="false" data-t="mArtist">Artist</button>
+    <button type="button" data-m="names" aria-pressed="false" data-t="mArtist">Artist</button>
     <button type="button" data-m="digital" aria-pressed="false" data-t="mDig">Digital</button>
     <button type="button" data-m="physical" aria-pressed="false" data-t="mPhys">Physical</button>
   </nav>
@@ -902,7 +899,7 @@ function resize(){
 
 /* ======================= Vistas: tres «universos» dentro de cilindros (mecánica estudiada en 100 Lost Species) =======================
    Grid: tres anillos alrededor de la cámara · Artist: un tambor vertical · Digital / Physical: dos anillos con rótulos.
-   Ordenador: Grid · Titles · Digital · Physical. Móvil: Grid · Artist · Digital · Physical (desde el 12 oct 2026, Digital y Física van por separado también en el ordenador). */
+   Ordenador y móvil: Grid · Artist · Digital · Physical (desde el 16 oct 2026 también el ordenador agrupa por artista; desde el 12 oct, Digital y Física por separado en ambos). */
 const MOBILE = matchMedia('(max-width:767px),(pointer:coarse) and (max-height:500px)');   // mismo corte que el CSS del menú
 // el menú es siempre el mismo; una vista sin obras en la selección activa no se abre (su botón se atenúa)
 const viewsNow = () => ['grid', 'names', 'digital', 'physical'];
@@ -910,14 +907,15 @@ const viewCount = v => v === 'digital' ? BYTYPE[0].length : v === 'physical' ? B
 const isRows = v => v === 'type' || v === 'digital' || v === 'physical';
 const rowGroups = mode => mode === 'digital' ? BYCAT[0] : BYCAT[1];
 const namesRadius = () => clamp(N * 1.09 / (TAU * .99), 6.5, 14);         // el tambor crece con el nº de obras: la separación entre ellas no cambia
-/* Orden del tambor y de la lista. Móvil («Artist»): por el nombre del artista, de la A a la Z (y, dentro de cada artista, por título);
-   las obras sin artista documentado, al final. Ordenador («Titles»): como el catálogo. NORD guarda ese orden (índices de obra). */
+/* Orden del tambor y de la lista («Artist», en móvil y en ordenador desde el 16 oct 2026): por el nombre del artista, de la A a la Z
+   (y, dentro de cada artista, por título); las obras sin artista documentado, al final. NORD guarda ese orden (índices de obra).
+   Hasta la v7.12 el ordenador mostraba «Titles» (los títulos, en el orden del catálogo). */
 const cmp = (a, b) => a.localeCompare(b, LANG, {sensitivity: 'base', numeric: true});
 const byArtist = (a, b) => { const A = works[a].artist, B = works[b].artist; if (!A !== !B) return A ? -1 : 1; return cmp(A || '', B || '') || cmp(works[a].title, works[b].title); };
-const namesOrder = () => MOBILE.matches ? [...ACT].sort(byArtist) : ACT;
-const nameText = k => MOBILE.matches ? works[k].artist || works[k].title : works[k].title;   // en «Artist», el artista (si no consta, el título)
+const namesOrder = () => [...ACT].sort(byArtist);
+const nameText = k => works[k].artist || works[k].title;                     // el artista (si no consta, el título)
 let NORD = [];
-const labelFor = v => ({grid: T.mGrid, names: MOBILE.matches ? T.mArtist : T.mNames, type: T.mType, digital: T.mDig, physical: T.mPhys})[v];
+const labelFor = v => ({grid: T.mGrid, names: T.mArtist, type: T.mType, digital: T.mDig, physical: T.mPhys})[v];
 const NW = matchMedia('(min-width:900px) and (min-aspect-ratio:1/1)');   // mismo corte que el CSS de la lista de títulos
 const PI = Math.PI, TAU = PI * 2, DEG = PI / 180;
 
