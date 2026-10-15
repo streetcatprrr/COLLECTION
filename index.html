@@ -188,9 +188,9 @@ body.is-focus .foot,body.is-focus .names,body.is-focus .pill,body.is-focus .scri
   </div>
   <nav class="modes" id="modes">
     <button type="button" data-m="grid" aria-pressed="true" data-t="mGrid">Grid</button>
-    <button type="button" data-m="names" aria-pressed="false" data-t="mArtist">Artist</button>
-    <button type="button" data-m="digital" aria-pressed="false" data-t="mDig">Digital</button>
-    <button type="button" data-m="physical" aria-pressed="false" data-t="mPhys">Physical</button>
+    <button type="button" data-m="names" aria-pressed="false" data-t="mArtist">Artists</button>
+    <button type="button" data-m="digital" aria-pressed="false" data-t="mDig">Digitals</button>
+    <button type="button" data-m="physical" aria-pressed="false" data-t="mPhys">Physicals</button>
   </nav>
 </div>
 <div class="focus" id="focus" hidden role="dialog" aria-modal="true" aria-labelledby="fTitle">
@@ -234,7 +234,7 @@ const ARTISTS = {};          // web o red social de cada artista: {"Nombre": "ht
 const HASH = new Set(decodeURIComponent(location.hash.slice(1)).toLowerCase().split(/[.\-_]/).filter(Boolean));
 const LANG = HASH.has('es') ? 'es' : HASH.has('en') ? 'en' : ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
 const T = {
-  en:{gallery:'Gallery', section:'Collection', mGrid:'Grid', mNames:'Titles', mArtist:'Artist', mType:'Digital / Physical', mDig:'Digital', mPhys:'Physical', modes:'Gallery view',
+  en:{gallery:'Gallery', section:'Collection', mGrid:'Grid', mNames:'Titles', mArtist:'Artists', mType:'Digital / Physical', mDig:'Digitals', mPhys:'Physicals', modes:'Gallery view',
       sel:'Selection', sAll:'All Works', sCol:'In Our Collection', sLove:'Art We Love',
       view:'View work', works:'works', work:'work', nDig:['digital', 'digital'], nPhys:['physical', 'physical'],
       untitled:'Untitled', medium:'Technique', format:'Format', collection:'Collection', network:'Network', contract:'Contract', token:'Token',
@@ -242,7 +242,7 @@ const T = {
       viewNft:'View NFT', more:'More info', close:'Close', list:'Works in the gallery', angle:'view',
       next:'The Gallery: go to MwMA',
       nogl:'Your browser cannot display the 3D gallery.'},
-  es:{gallery:'Galería', section:'Colección', mGrid:'Cuadrícula', mNames:'Títulos', mArtist:'Artista', mType:'Digital / Física', mDig:'Digital', mPhys:'Física', modes:'Vista de la galería',
+  es:{gallery:'Galería', section:'Colección', mGrid:'Cuadrícula', mNames:'Títulos', mArtist:'Artistas', mType:'Digital / Física', mDig:'Digitales', mPhys:'Físicas', modes:'Vista de la galería',
       sel:'Selección', sAll:'Todas las obras', sCol:'En nuestra colección', sLove:'Arte que amamos',
       view:'Ver obra', works:'obras', work:'obra', nDig:['digital', 'digitales'], nPhys:['física', 'físicas'],
       untitled:'Sin título', medium:'Técnica', format:'Formato', collection:'Colección', network:'Red', contract:'Contrato', token:'Token',
