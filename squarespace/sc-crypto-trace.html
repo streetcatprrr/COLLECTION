@@ -3,14 +3,14 @@
 #streetcat-crypto-donations-v1 .scd-qr-frame{position:relative}
 #streetcat-crypto-donations-v1 .scq-ring{position:absolute;inset:-1px;pointer-events:none;opacity:0;transition:opacity .6s ease}
 #streetcat-crypto-donations-v1 .scq-ring.on{opacity:1;transition:none}
-#streetcat-crypto-donations-v1 .scq-ring i{position:absolute;display:block;transition:transform 1.2s ease-in-out}
+#streetcat-crypto-donations-v1 .scq-ring i{position:absolute;display:block;transition:transform .8s ease-in-out}
 #streetcat-crypto-donations-v1 .scq-ring.rst i{transition:none!important}
 #streetcat-crypto-donations-v1 .scq-ring .t{top:0;left:0;width:100%;height:1px;transform-origin:left center;transform:scaleX(0);background:var(--sq-t)}
 #streetcat-crypto-donations-v1 .scq-ring .r{top:0;right:0;width:1px;height:100%;transform-origin:center top;transform:scaleY(0);background:var(--sq-r)}
 #streetcat-crypto-donations-v1 .scq-ring .b{bottom:0;right:0;width:100%;height:1px;transform-origin:right center;transform:scaleX(0);background:var(--sq-b)}
 #streetcat-crypto-donations-v1 .scq-ring .l{bottom:0;left:0;width:1px;height:100%;transform-origin:center bottom;transform:scaleY(0);background:var(--sq-l)}
 #streetcat-crypto-donations-v1 .scq-ring.drawn i{transform:none}
-#streetcat-crypto-donations-v1 .scq-ring.flash{animation:scqFlash .7s ease-out}
+#streetcat-crypto-donations-v1 .scq-ring.flash{animation:scqFlash .55s ease-out}
 @keyframes scqFlash{0%{filter:brightness(1)}30%{filter:brightness(1.8) drop-shadow(0 0 3px var(--sq-g))}100%{filter:brightness(1)}}
 #streetcat-crypto-donations-v1 .scq-ring[data-coin="bitcoin"]{--sq-t:#F7931A;--sq-r:#F7931A;--sq-b:#F7931A;--sq-l:#F7931A;--sq-g:#F7931A}
 #streetcat-crypto-donations-v1 .scq-ring[data-coin="ethereum"]{--sq-t:#627EEA;--sq-r:#627EEA;--sq-b:#627EEA;--sq-l:#627EEA;--sq-g:#627EEA}
@@ -42,7 +42,7 @@
         if(c===card&&!reduce){
           r.classList.add('rst'); r.classList.remove('drawn','flash','on'); void r.offsetWidth;
           r.classList.remove('rst'); r.classList.add('on'); void r.offsetWidth; r.classList.add('drawn');
-          r.__t=setTimeout(function(){r.classList.add('flash');},1200);
+          r.__t=setTimeout(function(){r.classList.add('flash');},800);
         } else {
           r.classList.remove('flash'); r.classList.add('on','drawn');
         }
