@@ -1,0 +1,64 @@
+<!-- sc-crypto-trace: al copiar una dirección, se traza un marco fino del color de la cripto alrededor del QR y parpadea una vez -->
+<style>
+#streetcat-crypto-donations-v1 .scd-qr-frame{position:relative}
+#streetcat-crypto-donations-v1 .scq-ring{position:absolute;inset:-4px;pointer-events:none;opacity:0;transition:opacity .6s ease}
+#streetcat-crypto-donations-v1 .scq-ring.on{opacity:1;transition:none}
+#streetcat-crypto-donations-v1 .scq-ring i{position:absolute;display:block;transition:transform 1.2s ease-in-out}
+#streetcat-crypto-donations-v1 .scq-ring.rst i{transition:none!important}
+#streetcat-crypto-donations-v1 .scq-ring .t{top:0;left:0;width:100%;height:1px;transform-origin:left center;transform:scaleX(0);background:var(--sq-t)}
+#streetcat-crypto-donations-v1 .scq-ring .r{top:0;right:0;width:1px;height:100%;transform-origin:center top;transform:scaleY(0);background:var(--sq-r)}
+#streetcat-crypto-donations-v1 .scq-ring .b{bottom:0;right:0;width:100%;height:1px;transform-origin:right center;transform:scaleX(0);background:var(--sq-b)}
+#streetcat-crypto-donations-v1 .scq-ring .l{bottom:0;left:0;width:1px;height:100%;transform-origin:center bottom;transform:scaleY(0);background:var(--sq-l)}
+#streetcat-crypto-donations-v1 .scq-ring.drawn i{transform:none}
+#streetcat-crypto-donations-v1 .scq-ring.flash{animation:scqFlash .7s ease-out}
+@keyframes scqFlash{0%{filter:brightness(1)}30%{filter:brightness(1.8) drop-shadow(0 0 3px var(--sq-g))}100%{filter:brightness(1)}}
+#streetcat-crypto-donations-v1 .scq-ring[data-coin="bitcoin"]{--sq-t:#F7931A;--sq-r:#F7931A;--sq-b:#F7931A;--sq-l:#F7931A;--sq-g:#F7931A}
+#streetcat-crypto-donations-v1 .scq-ring[data-coin="ethereum"]{--sq-t:#627EEA;--sq-r:#627EEA;--sq-b:#627EEA;--sq-l:#627EEA;--sq-g:#627EEA}
+#streetcat-crypto-donations-v1 .scq-ring[data-coin="usdt-tron"]{--sq-t:#26A17B;--sq-r:#26A17B;--sq-b:#26A17B;--sq-l:#26A17B;--sq-g:#26A17B}
+#streetcat-crypto-donations-v1 .scq-ring[data-coin="solana"]{--sq-t:linear-gradient(90deg,#9945FF,#579BCA);--sq-r:linear-gradient(180deg,#579BCA,#14F195);--sq-b:linear-gradient(90deg,#579BCA,#14F195);--sq-l:linear-gradient(180deg,#9945FF,#579BCA);--sq-g:#579BCA}
+@media (prefers-reduced-motion:reduce){#streetcat-crypto-donations-v1 .scq-ring i{transition:none}#streetcat-crypto-donations-v1 .scq-ring.flash{animation:none}}
+</style>
+<script>
+(function(){
+  function init(){
+    var root=document.getElementById('streetcat-crypto-donations-v1');
+    if(!root||root.__scq) return; root.__scq=true;
+    var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var current=null;
+    function ringOf(frame,coin){
+      var r=frame.querySelector(':scope > .scq-ring');
+      if(!r){r=document.createElement('span');r.className='scq-ring';r.setAttribute('aria-hidden','true');r.innerHTML='<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>';frame.appendChild(r);}
+      r.setAttribute('data-coin',coin); return r;
+    }
+    function show(card){
+      var coin=card.getAttribute('data-coin'); if(!coin) return;
+      if(current&&current!==coin){
+        root.querySelectorAll('.scq-ring[data-coin="'+current+'"]').forEach(function(r){clearTimeout(r.__t);r.classList.remove('on','drawn','flash');});
+      }
+      current=coin;
+      root.querySelectorAll('.scd-card[data-coin="'+coin+'"]').forEach(function(c){
+        var f=c.querySelector('.scd-qr-frame'); if(!f) return;
+        var r=ringOf(f,coin); clearTimeout(r.__t);
+        if(c===card&&!reduce){
+          r.classList.add('rst'); r.classList.remove('drawn','flash','on'); void r.offsetWidth;
+          r.classList.remove('rst'); r.classList.add('on'); void r.offsetWidth; r.classList.add('drawn');
+          r.__t=setTimeout(function(){r.classList.add('flash');},1200);
+        } else {
+          r.classList.remove('flash'); r.classList.add('on','drawn');
+        }
+      });
+    }
+    new MutationObserver(function(ms){
+      var seen=[];
+      ms.forEach(function(m){
+        var n=m.target, el=n.nodeType===1?n:n.parentElement;
+        var b=el&&el.closest?el.closest('.scd-copy'):null;
+        if(b&&seen.indexOf(b)<0&&/^COPIED/.test((b.textContent||'').trim())){seen.push(b);var c=b.closest('.scd-card');if(c)show(c);}
+      });
+    }).observe(root,{childList:true,subtree:true,characterData:true});
+    root.addEventListener('animationend',function(e){if(e.target.classList&&e.target.classList.contains('scq-ring'))e.target.classList.remove('flash');});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+})();
+</script>
+<!-- /sc-crypto-trace -->
