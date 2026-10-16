@@ -1,7 +1,7 @@
-<!-- sc-crypto-trace: al copiar una dirección, se traza un marco fino del color de la cripto alrededor del QR y parpadea una vez -->
+<!-- sc-crypto-trace: al copiar una dirección, se traza un marco fino del color de la cripto pegado al QR, parpadea una vez y desaparece -->
 <style>
 #streetcat-crypto-donations-v1 .scd-qr-frame{position:relative}
-#streetcat-crypto-donations-v1 .scq-ring{position:absolute;inset:-1px;pointer-events:none;opacity:0;transition:opacity .6s ease}
+#streetcat-crypto-donations-v1 .scq-ring{position:absolute;inset:-1px;pointer-events:none;opacity:0;transition:opacity .4s ease}
 #streetcat-crypto-donations-v1 .scq-ring.on{opacity:1;transition:none}
 #streetcat-crypto-donations-v1 .scq-ring i{position:absolute;display:block;transition:transform .8s ease-in-out}
 #streetcat-crypto-donations-v1 .scq-ring.rst i{transition:none!important}
@@ -24,30 +24,20 @@
     var root=document.getElementById('streetcat-crypto-donations-v1');
     if(!root||root.__scq) return; root.__scq=true;
     var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    var current=null;
     function ringOf(frame,coin){
       var r=frame.querySelector(':scope > .scq-ring');
       if(!r){r=document.createElement('span');r.className='scq-ring';r.setAttribute('aria-hidden','true');r.innerHTML='<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>';frame.appendChild(r);}
       r.setAttribute('data-coin',coin); return r;
     }
+    function reset(r){r.classList.add('rst');r.classList.remove('drawn','flash','on');void r.offsetWidth;r.classList.remove('rst');}
+    function hide(r){clearTimeout(r.__t);r.classList.remove('on','flash');r.__t=setTimeout(function(){reset(r);},450);}
     function show(card){
-      var coin=card.getAttribute('data-coin'); if(!coin) return;
-      if(current&&current!==coin){
-        root.querySelectorAll('.scq-ring[data-coin="'+current+'"]').forEach(function(r){clearTimeout(r.__t);r.classList.remove('on','drawn','flash');});
-      }
-      current=coin;
-      root.querySelectorAll('.scd-card[data-coin="'+coin+'"]').forEach(function(c){
-        var f=c.querySelector('.scd-qr-frame'); if(!f) return;
-        var r=ringOf(f,coin); clearTimeout(r.__t);
-        if(c===card&&!reduce){
-          r.classList.add('rst'); r.classList.remove('drawn','flash','on'); void r.offsetWidth;
-          r.classList.remove('rst'); r.classList.add('on'); void r.offsetWidth; r.classList.add('drawn');
-          r.__t=setTimeout(function(){r.classList.add('flash');},800);
-        } else {
-          r.classList.remove('flash'); r.classList.add('on','drawn');
-        }
-      });
+      var f=card.querySelector('.scd-qr-frame'); if(!f) return;
+      var r=ringOf(f,card.getAttribute('data-coin')||''); clearTimeout(r.__t);
+      reset(r); r.classList.add('on'); void r.offsetWidth; r.classList.add('drawn');
+      r.__t=setTimeout(function(){ if(reduce){hide(r);} else {r.classList.add('flash');} }, reduce?900:800);
     }
+    root.addEventListener('animationend',function(e){var r=e.target;if(r.classList&&r.classList.contains('scq-ring')&&e.animationName==='scqFlash')hide(r);});
     new MutationObserver(function(ms){
       var seen=[];
       ms.forEach(function(m){
@@ -56,7 +46,6 @@
         if(b&&seen.indexOf(b)<0&&/^COPIED/.test((b.textContent||'').trim())){seen.push(b);var c=b.closest('.scd-card');if(c)show(c);}
       });
     }).observe(root,{childList:true,subtree:true,characterData:true});
-    root.addEventListener('animationend',function(e){if(e.target.classList&&e.target.classList.contains('scq-ring'))e.target.classList.remove('flash');});
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();
