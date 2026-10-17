@@ -119,9 +119,10 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     return s;
   });
   /* ── Prueba: la cifra se estira detrás del dedo o del cursor con los colores separados (WebGL) ──
-     Mientras no hay movimiento se ve la cifra normal (texto). Al moverse cerca de ella se cambia por una copia en un canvas,
-     que un shader desplaza en el sentido del movimiento: 10 muestras a lo largo del desplazamiento y el rojo, el verde y el
-     azul cada uno un poco más lejos. El efecto cae con la distancia al dedo y se apaga solo al parar. */
+     Mientras no hay movimiento se ve la cifra normal (texto). Cuando la cifra termina de aparecer se prepara una copia exacta
+     (un SVG con la misma fuente incrustada y los números de caja alta, que el canvas no sabe elegir) y, al moverse cerca, se
+     cambia por ella: un shader la desplaza en el sentido del movimiento con 10 muestras y el rojo, el verde y el azul cada uno
+     un poco más lejos. El efecto cae con la distancia al dedo y se apaga solo al parar. */
   const SM = (() => {
     if (RM) return null;
     const cv = document.createElement('canvas'); cv.className = 'smear'; cv.setAttribute('aria-hidden', 'true');
@@ -147,32 +148,62 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
 
+    // The figure's font, embedded in the SVG copy (Google Fonts: the latin subset for the digits, and the one with ≈).
+    let fonts = null;
+    const loadFonts = () => fonts || (fonts = (async () => {
+      const pick = async url => {
+        const css = await fetch(url).then(r => r.text()); let u = null;
+        for (const b of css.split('/* ')) if (b.startsWith('latin */')) { const m = b.match(/url\((https:[^)]+)\)/); if (m) { u = m[1]; break; } }
+        if (!u) { const m = css.match(/url\((https:[^)]+)\)/); if (m) u = m[1]; }
+        if (!u) return null;
+        const bytes = new Uint8Array(await fetch(u).then(r => r.arrayBuffer())); let s = '';
+        for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+        return 'data:font/woff2;base64,' + btoa(s);
+      };
+      const [lat, sym] = await Promise.all([
+        pick('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&display=swap'),
+        pick('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&text=%E2%89%88&display=swap')]);
+      return lat ? { lat, sym } : null;
+    })().catch(() => null));
+    loadFonts();
+
     const K = .55, MAXM = 520;               // fuerza del desplazamiento (px por px/s) y tope
-    let box = null, screen = null, num = null, active = false, frozen = false, raf = 0;
+    let box = null, num = null, prep = -1, token = 0, active = false, frozen = false, raf = 0;
     let vx = 0, vy = 0, lx = 0, ly = 0, lastT = 0, lastX = 0, lastY = 0, moved = 0;
     const radius = () => Math.max(170, (num ? parseFloat(getComputedStyle(num).fontSize) : 200) * .95);
+    const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
-    function snapshot(s) {
-      num = s.querySelector('.num'); screen = s;
+    async function prepare(i) {
+      const my = ++token; prep = -1;
+      const f = await loadFonts(); if (!f || my !== token) return;
+      const s = screens[i]; num = s.querySelector('.num');
       const nr = num.getBoundingClientRect(), sr = s.getBoundingClientRect();
       const M = Math.ceil(MAXM * .3) + 8;
       box = { x: nr.left - M, y: nr.top - M, w: nr.width + 2 * M, h: nr.height + 2 * M };
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const tc = document.createElement('canvas'); tc.width = Math.round(box.w * dpr); tc.height = Math.round(box.h * dpr);
-      const cx = tc.getContext('2d'); cx.scale(dpr, dpr); cx.textBaseline = 'alphabetic';
+      const dpr = Math.min(window.devicePixelRatio || 1, 2), W = Math.round(box.w * dpr), H = Math.round(box.h * dpr);
+      let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + box.w + ' ' + box.h + '"><style>' +
+        '@font-face{font-family:SCL;font-weight:500;src:url(' + f.lat + ') format("woff2")}' +
+        (f.sym ? '@font-face{font-family:SCS;font-weight:500;src:url(' + f.sym + ') format("woff2")}' : '') +
+        'text{font-family:SCL,SCS,serif;font-weight:500;font-variant-numeric:lining-nums;font-feature-settings:"lnum" 1}</style>';
       num.querySelectorAll('span').forEach(sp => {
         const mk = document.createElement('i'); mk.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
         sp.appendChild(mk); const base = mk.getBoundingClientRect().bottom; mk.remove();
-        const r = sp.getBoundingClientRect(), cs = getComputedStyle(sp);
-        cx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-        cx.fillStyle = cs.color; cx.globalAlpha = +cs.opacity || 1;
-        cx.fillText(sp.textContent, r.left - box.x, base - box.y);
+        const r = sp.getBoundingClientRect(), fsz = getComputedStyle(sp).fontSize;
+        const col = sp.classList.contains('sym') ? 'rgba(243,241,236,.84)' : '#f3f1ec';
+        svg += '<text x="' + (r.left - box.x).toFixed(2) + '" y="' + (base - box.y).toFixed(2) + '" font-size="' + fsz + '" fill="' + col + '">' + esc(sp.textContent) + '</text>';
       });
-      gl.bindTexture(gl.TEXTURE_2D, tex); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc);
-      cv.width = tc.width; cv.height = tc.height;
+      svg += '</svg>';
+      const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+      try { await img.decode(); } catch (_) { return; }
+      if (my !== token) return;
+      const tc = document.createElement('canvas'); tc.width = W; tc.height = H; tc.getContext('2d').drawImage(img, 0, 0, W, H); window.__wwdTC = tc;
+      gl.bindTexture(gl.TEXTURE_2D, tex);
+      try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc); } catch (_) { return; }
+      cv.width = W; cv.height = H;
       cv.style.left = (box.x - sr.left) + 'px'; cv.style.top = (box.y - sr.top) + 'px';
       cv.style.width = box.w + 'px'; cv.style.height = box.h + 'px';
-      s.appendChild(cv);
+      cv.classList.remove('on'); s.appendChild(cv);
+      prep = i;
     }
     function draw() {
       let mx = -vx * K, my = -vy * K; const mm = Math.hypot(mx, my); if (mm > MAXM) { mx *= MAXM / mm; my *= MAXM / mm; }
@@ -187,12 +218,13 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
       if (Math.hypot(vx, vy) < 6 && now - moved > 220) { off(); return; }
       draw();
     }
-    function on() { snapshot(screens[idx]); num.style.visibility = 'hidden'; cv.classList.add('on'); active = true; frozen = false; cancelAnimationFrame(raf); loop(); }
+    function on() { draw(); num.style.visibility = 'hidden'; cv.classList.add('on'); active = true; frozen = false; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
     function off() { cancelAnimationFrame(raf); active = false; vx = vy = 0; if (!frozen) { cv.classList.remove('on'); if (num) num.style.visibility = ''; } }
     return {
       ready: false,
+      arm(i) { this.ready = true; prepare(i); },
       move(e) {
-        if (!this.ready || leaving) return;
+        if (!this.ready || leaving || prep !== idx) return;
         const now = performance.now();
         if (lastT && now - lastT < 120) {
           const dt = Math.max(8, now - lastT);
@@ -200,20 +232,21 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
         }
         lastT = now; lastX = e.clientX; lastY = e.clientY; lx = e.clientX; ly = e.clientY; moved = now;
         if (!active) {
-          const n = screens[idx].querySelector('.num').getBoundingClientRect(), R = radius() * .8;
+          const n = num.getBoundingClientRect(), R = radius() * .8;
           if (e.clientX < n.left - R || e.clientX > n.right + R || e.clientY < n.top - R || e.clientY > n.bottom + R) return;
+          if (Math.hypot(vx, vy) < 40) return;
           on();
         }
       },
       start() { lastT = 0; },
-      freeze() { if (active) { cancelAnimationFrame(raf); active = false; frozen = true; } this.ready = false; },   // al salir: la estela se va con el fundido
-      reset() { cancelAnimationFrame(raf); active = false; frozen = false; vx = vy = 0; lastT = 0; cv.classList.remove('on'); screens.forEach(s => { const n = s.querySelector('.num'); if (n) n.style.visibility = ''; }); this.ready = false; },
-      relayout() { if (active || frozen) this.reset(); },
-      dbg() { return { active, frozen, vx, vy, box, since: Math.round(performance.now() - moved), gl: !!gl, err: gl.getError() }; }
+      freeze() { if (active) { cancelAnimationFrame(raf); active = false; frozen = true; } this.ready = false; token++; },   // al salir: la estela se va con el fundido
+      reset() { cancelAnimationFrame(raf); token++; prep = -1; active = false; frozen = false; vx = vy = 0; lastT = 0; cv.classList.remove('on'); screens.forEach(s => { const n = s.querySelector('.num'); if (n) n.style.visibility = ''; }); this.ready = false; },
+      relayout() { const was = this.ready; this.reset(); if (was) this.arm(idx); },
+      dbg() { return { active, frozen, prep, vx, vy, box, since: Math.round(performance.now() - moved) }; }
     };
   })();
-
   window.__wwdSM = SM;
+
   // One period line for the whole sequence: it is written once, under the first figure, and then stays.
   const PERIOD = DATA[lang][0].period;
   const period = document.createElementNS(SVG, 'svg'); period.setAttribute('class', 'period'); period.setAttribute('aria-label', PERIOD);
@@ -277,7 +310,8 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     let t = T.start;
     groups.forEach((g, k) => at(t + k * T.digit, () => g.forEach(el => fadeIn(el, T.dIn, 12))));
     t += (groups.length - 1) * T.digit + T.dIn;
-    at(t - 160, () => { glint(s.querySelector('.num')); if (SM) SM.ready = true; });
+    at(t - 160, () => glint(s.querySelector('.num')));
+    if (SM) at(t + 40, () => SM.arm(i));
     t += T.pause;
     at(t, () => fadeIn(concept, T.cIn, 10));
     if (periodDone) {
@@ -347,7 +381,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) exit(dx > 0 ? -1 : 1, true);
     else if (travel < 12 && performance.now() - t0 < 600) leave();
   });
-  addEventListener('resize', () => { if (SM) SM.relayout(); });
+  let rz = 0; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (SM) SM.relayout(); }, 150); });
   addEventListener('keydown', e => {
     if (!started || leaving) return;
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); leave(); }
