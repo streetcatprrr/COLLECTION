@@ -204,6 +204,13 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
       cv.style.width = box.w + 'px'; cv.style.height = box.h + 'px';
       cv.classList.remove('on'); s.appendChild(cv);
       prep = i;
+      // Safari a veces pinta el SVG antes de aplicar la fuente incrustada: se vuelve a pintar dos veces al poco.
+      [250, 900].forEach(ms => setTimeout(() => {
+        if (my !== token) return;
+        const c2 = tc.getContext('2d'); c2.clearRect(0, 0, W, H); c2.drawImage(img, 0, 0, W, H);
+        gl.bindTexture(gl.TEXTURE_2D, tex); try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc); } catch (_) {}
+        if (active) draw();
+      }, ms));
     }
     function draw() {
       let mx = -vx * K, my = -vy * K; const mm = Math.hypot(mx, my); if (mm > MAXM) { mx *= MAXM / mm; my *= MAXM / mm; }
