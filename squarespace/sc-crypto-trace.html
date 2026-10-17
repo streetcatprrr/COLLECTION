@@ -1,14 +1,14 @@
-<!-- sc-crypto-trace: al copiar una dirección, se traza un marco fino del color de la cripto pegado al QR, parpadea una vez y desaparece -->
+<!-- sc-crypto-trace: al copiar una dirección, se traza un marco del color de la cripto pegado al QR (grosor --sq-w, 3 px), parpadea una vez y desaparece -->
 <style>
 #streetcat-crypto-donations-v1 .scd-qr-frame{position:relative}
-#streetcat-crypto-donations-v1 .scq-ring{position:absolute;inset:-1px;pointer-events:none;opacity:0;transition:opacity .3s ease}
+#streetcat-crypto-donations-v1 .scq-ring{--sq-w:3px;position:absolute;inset:calc(var(--sq-w) * -1);pointer-events:none;opacity:0;transition:opacity .3s ease}
 #streetcat-crypto-donations-v1 .scq-ring.on{opacity:1;transition:none}
 #streetcat-crypto-donations-v1 .scq-ring i{position:absolute;display:block;transition:transform .5s ease-in-out}
 #streetcat-crypto-donations-v1 .scq-ring.rst i{transition:none!important}
-#streetcat-crypto-donations-v1 .scq-ring .t{top:0;left:0;width:100%;height:1px;transform-origin:left center;transform:scaleX(0);background:var(--sq-t)}
-#streetcat-crypto-donations-v1 .scq-ring .r{top:0;right:0;width:1px;height:100%;transform-origin:center top;transform:scaleY(0);background:var(--sq-r)}
-#streetcat-crypto-donations-v1 .scq-ring .b{bottom:0;right:0;width:100%;height:1px;transform-origin:right center;transform:scaleX(0);background:var(--sq-b)}
-#streetcat-crypto-donations-v1 .scq-ring .l{bottom:0;left:0;width:1px;height:100%;transform-origin:center bottom;transform:scaleY(0);background:var(--sq-l)}
+#streetcat-crypto-donations-v1 .scq-ring .t{top:0;left:0;width:100%;height:var(--sq-w);transform-origin:left center;transform:scaleX(0);background:var(--sq-t)}
+#streetcat-crypto-donations-v1 .scq-ring .r{top:0;right:0;width:var(--sq-w);height:100%;transform-origin:center top;transform:scaleY(0);background:var(--sq-r)}
+#streetcat-crypto-donations-v1 .scq-ring .b{bottom:0;right:0;width:100%;height:var(--sq-w);transform-origin:right center;transform:scaleX(0);background:var(--sq-b)}
+#streetcat-crypto-donations-v1 .scq-ring .l{bottom:0;left:0;width:var(--sq-w);height:100%;transform-origin:center bottom;transform:scaleY(0);background:var(--sq-l)}
 #streetcat-crypto-donations-v1 .scq-ring.drawn i{transform:none}
 #streetcat-crypto-donations-v1 .scq-ring.flash{animation:scqFlash .4s ease-out}
 @keyframes scqFlash{0%{filter:brightness(1)}30%{filter:brightness(1.8) drop-shadow(0 0 3px var(--sq-g))}100%{filter:brightness(1)}}
