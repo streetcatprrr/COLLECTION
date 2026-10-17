@@ -10,8 +10,9 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&text=%E2%89%88&display=swap">
 <style>
-/* What We Do · v1.15-prueba (17 oct 2026): estela RGB sobre la cifra al arrastrar o pasar el ratón (WebGL).
-   Basada en v1.14 (14 oct 2026). One black screen per figure: number in the upper centre, concept under it,
+/* What We Do · v1.15-prueba.2 (17 oct 2026): estela RGB sobre la cifra al arrastrar o pasar el ratón (WebGL). Si el dedo
+   toca la cifra, el gesto solo hace el efecto (ni lleva a Donate ni cambia de cifra) y, hasta que se levanta, la cifra no
+   pasa sola a la siguiente. Basada en v1.14 (14 oct 2026). One black screen per figure: number in the upper centre, concept under it,
    period written once and kept. Cormorant Garamond throughout. «Donate ↵» top right and the last tap lead on
    to Donate through a frosted fade. */
 :root{
@@ -168,14 +169,14 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     loadFonts();
 
     const K = .55, MAXM = 520;               // fuerza del desplazamiento (px por px/s) y tope
-    let box = null, num = null, prep = -1, token = 0, active = false, frozen = false, raf = 0;
-    let vx = 0, vy = 0, lx = 0, ly = 0, lastT = 0, lastX = 0, lastY = 0, moved = 0;
+    let box = null, num = null, prep = -1, token = 0, active = false, frozen = false, raf = 0, broken = false, lastOn = -1e9;
+    let vx = 0, vy = 0, lx = 0, ly = 0, lastT = 0, lastX = 0, lastY = 0, moved = 0, lastF = 0;
     const radius = () => Math.max(170, (num ? parseFloat(getComputedStyle(num).fontSize) : 200) * .95);
     const esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
     async function prepare(i) {
       const my = ++token; prep = -1;
-      const f = await loadFonts(); if (!f || my !== token) return;
+      const f = await loadFonts(); if (!f) { broken = true; return; } if (my !== token) return;
       const s = screens[i]; num = s.querySelector('.num');
       const nr = num.getBoundingClientRect(), sr = s.getBoundingClientRect();
       const M = Math.ceil(MAXM * .3) + 8;
@@ -193,12 +194,15 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
         svg += '<text x="' + (r.left - box.x).toFixed(2) + '" y="' + (base - box.y).toFixed(2) + '" font-size="' + fsz + '" fill="' + col + '">' + esc(sp.textContent) + '</text>';
       });
       svg += '</svg>';
-      const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-      try { await img.decode(); } catch (_) { return; }
+      const img = new Image();
+      const loaded = new Promise(r => { img.onload = () => r(true); img.onerror = () => r(false); });
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+      let okImg = true; try { await img.decode(); } catch (_) { okImg = await loaded; }   // si decode() falla sin motivo, vale el onload
+      if (!okImg) { broken = true; return; }
       if (my !== token) return;
       const tc = document.createElement('canvas'); tc.width = W; tc.height = H; tc.getContext('2d').drawImage(img, 0, 0, W, H); window.__wwdTC = tc;
       gl.bindTexture(gl.TEXTURE_2D, tex);
-      try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc); } catch (_) { return; }
+      try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, tc); } catch (_) { broken = true; return; }
       cv.width = W; cv.height = H;
       cv.style.left = (box.x - sr.left) + 'px'; cv.style.top = (box.y - sr.top) + 'px';
       cv.style.width = box.w + 'px'; cv.style.height = box.h + 'px';
@@ -220,12 +224,14 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     }
     function loop() {
       raf = requestAnimationFrame(loop);
-      const now = performance.now();
-      if (now - moved > 45) { vx *= .84; vy *= .84; }
+      const now = performance.now(); lastOn = now;
+      // La estela cae por tiempo, no por fotograma: dura lo mismo en pantallas de 60 y de 120 Hz.
+      const dt = lastF ? Math.min(64, now - lastF) : 16.67; lastF = now;
+      if (now - moved > 45) { const k = Math.pow(.84, dt / 16.67); vx *= k; vy *= k; }
       if (Math.hypot(vx, vy) < 6 && now - moved > 220) { off(); return; }
       draw();
     }
-    function on() { draw(); num.style.visibility = 'hidden'; cv.classList.add('on'); active = true; frozen = false; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
+    function on() { draw(); num.style.visibility = 'hidden'; cv.classList.add('on'); active = true; frozen = false; lastOn = performance.now(); lastF = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); }
     function off() { cancelAnimationFrame(raf); active = false; vx = vy = 0; if (!frozen) { cv.classList.remove('on'); if (num) num.style.visibility = ''; } }
     return {
       ready: false,
@@ -249,6 +255,8 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
       freeze() { if (active) { cancelAnimationFrame(raf); active = false; frozen = true; } this.ready = false; token++; },   // al salir: la estela se va con el fundido
       reset() { cancelAnimationFrame(raf); token++; prep = -1; active = false; frozen = false; vx = vy = 0; lastT = 0; cv.classList.remove('on'); screens.forEach(s => { const n = s.querySelector('.num'); if (n) n.style.visibility = ''; }); this.ready = false; },
       relayout() { const was = this.ready; this.reset(); if (was) this.arm(idx); },
+      usable() { return !broken; },                                            // false si la copia de la cifra no se pudo hacer
+      idle() { return active ? 0 : performance.now() - lastOn; },              // ms desde la última vez que se vio el efecto
       dbg() { return { active, frozen, prep, vx, vy, box, since: Math.round(performance.now() - moved) }; }
     };
   })();
@@ -265,6 +273,9 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
   let periodDone = false;
 
   let idx = 0, timers = [], started = false;
+  // Prueba: el dedo sobre la cifra la retiene; al levantarlo, si ya le tocaba irse, espera GRACE ms antes de pasar a la siguiente.
+  let holding = false, autoDue = false, lastUp = -1e9;
+  const GRACE = 1500;
   const clear = () => { timers.forEach(clearTimeout); timers = []; };
   const at = (ms, fn) => timers.push(setTimeout(fn, ms));
   const fadeIn = (el, dur, blur) => el.animate(
@@ -297,7 +308,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
 
   function show(i) {
     clear();
-    idx = i;
+    idx = i; autoDue = false;
     if (SM) SM.reset();
     screens.forEach((s, k) => { reset(s); s.classList.toggle('on', k === i); });
     const s = screens[i];
@@ -311,7 +322,7 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     if (RM) {
       at(T.start, () => { spans.forEach(el => fadeIn(el, 700, 0)); });
       at(T.start + 500, () => { fadeIn(concept, 700, 0); writePeriod(); });
-      at(T.start + 500 + 700 + 4200, () => exit(1, false));
+      at(T.start + 500 + 700 + 4200, auto);
       return;
     }
     let t = T.start;
@@ -329,7 +340,15 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
       at(t, () => writePeriod());
       t += T.pIn + T.hold;
     }
-    at(t, () => exit(1, false));
+    at(t, auto);
+  }
+
+  // When a figure's time is up it moves on, unless a finger is still on it or it has just been played with (prueba).
+  function auto() {
+    if (holding) { autoDue = true; return; }
+    const quiet = Math.min(performance.now() - lastUp, SM ? SM.idle() : Infinity);
+    if (quiet < GRACE) { at(GRACE - quiet, auto); return; }
+    exit(1, false);
   }
 
   function exit(dir, fast) {
@@ -373,18 +392,53 @@ body{background:var(--ink);color:var(--paper);font-family:var(--serif);overflow:
     e.preventDefault(); leave();
   });
 
-  // A tap anywhere goes straight on to Donate; a swipe moves between figures. On a keyboard: Enter or Space to go on, arrows to move.
+  // A tap goes straight on to Donate; a swipe moves between figures. On a keyboard: Enter or Space to go on, arrows to move.
   // Prueba: un toque es un toque solo si el dedo casi no se mueve; un arrastre que no es claramente lateral es juego (no hace nada).
-  let x0 = null, y0 = null, t0 = 0, travel = 0, px = 0, py = 0;
-  stage.addEventListener('pointerdown', e => { x0 = px = e.clientX; y0 = py = e.clientY; t0 = performance.now(); travel = 0; if (SM) { SM.start(); SM.move(e); } });
-  stage.addEventListener('pointermove', e => {
-    if (x0 !== null) { travel += Math.hypot(e.clientX - px, e.clientY - py); px = e.clientX; py = e.clientY; }
-    if (SM) SM.move(e);
+  // Si el dedo toca la cifra (al empezar o al pasar por encima), el gesto es solo juego: ni el toque ni el deslizamiento navegan, y
+  // hasta que se levanta el dedo la cifra no se va (ver auto). Sin el efecto (sin WebGL, con movimiento reducido o si falla la copia)
+  // no hay con qué jugar y la cifra vuelve a ser un sitio más donde tocar para ir a Donate, como en v1.14.
+  const PAD = 12;   // margen para el dedo alrededor de la cifra (px)
+  const onFigure = (x, y) => {
+    if (!SM || !SM.usable()) return false;
+    let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
+    screens[idx].querySelectorAll('.num span').forEach(el => {
+      const q = el.getBoundingClientRect();
+      if (q.width) { l = Math.min(l, q.left); t = Math.min(t, q.top); r = Math.max(r, q.right); b = Math.max(b, q.bottom); }
+    });
+    return x >= l - PAD && x <= r + PAD && y >= t - PAD && y <= b + PAD;
+  };
+  const release = () => {
+    if (!holding) return;
+    holding = false; lastUp = performance.now();
+    if (autoDue) { autoDue = false; at(GRACE, auto); }
+  };
+  let x0 = null, y0 = null, t0 = 0, travel = 0, px = 0, py = 0, onNum = false;
+  const play = e => {
+    if (onNum) return;
+    onNum = holding = true;
+    try { stage.setPointerCapture(e.pointerId); } catch (_) {}   // el soltar llega aunque se salga de la página
+  };
+  stage.addEventListener('pointerdown', e => {
+    x0 = px = e.clientX; y0 = py = e.clientY; t0 = performance.now(); travel = 0; onNum = false;
+    if (onFigure(e.clientX, e.clientY)) play(e);
+    if (SM) { SM.start(); SM.move(e); }
   });
-  stage.addEventListener('pointercancel', () => { x0 = null; });
+  stage.addEventListener('pointermove', e => {
+    if (x0 !== null) {
+      travel += Math.hypot(e.clientX - px, e.clientY - py); px = e.clientX; py = e.clientY;
+      if (!onNum && onFigure(e.clientX, e.clientY)) play(e);
+    }
+    if (SM) SM.move(e);
+    // Con ratón, sobre la cifra la flecha normal: ahí un clic no lleva a ningún sitio.
+    if (e.pointerType === 'mouse') document.body.style.cursor = (x0 !== null ? onNum : onFigure(e.clientX, e.clientY)) ? 'default' : '';
+  });
+  stage.addEventListener('pointercancel', () => { x0 = null; release(); });
+  stage.addEventListener('lostpointercapture', release);
   stage.addEventListener('pointerup', e => {
-    if (!started || leaving || x0 === null) return;
+    release();
+    if (x0 === null) return;
     const dx = e.clientX - x0, dy = e.clientY - y0; x0 = null;
+    if (!started || leaving || onNum) return;
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.2) exit(dx > 0 ? -1 : 1, true);
     else if (travel < 12 && performance.now() - t0 < 600) leave();
   });
