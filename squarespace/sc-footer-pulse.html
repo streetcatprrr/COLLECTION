@@ -1,0 +1,30 @@
+<!-- sc-footer-pulse: «Credits» descansa al 72 % y, cuando los iconos de redes terminan de dibujarse al entrar en una sección, sube una sola vez al blanco y vuelve (2,5 s, sin halo) -->
+<style>
+.scc .scc-btn{opacity:.72}
+.scc .scc-btn:hover,.scc .scc-btn:focus-visible{opacity:1}
+.scc.sc-pulse .scc-btn{animation:scCreditsPulse 2.5s ease-in-out 1}
+@keyframes scCreditsPulse{0%{opacity:.72}50%{opacity:1}100%{opacity:.72}}
+@media (prefers-reduced-motion:reduce){.scc.sc-pulse .scc-btn{animation:none}}
+</style>
+<script>
+(function(){
+  function init(){
+    var s=document.getElementById('scs'), c=document.getElementById('scc');
+    if(!s||!c||c.__scPulse) return; c.__scPulse=true;
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var done=false;
+    function pulse(){
+      if(done) return; done=true;
+      var drawn=document.documentElement.classList.contains('sc-shell-seen')&&!window.matchMedia('(max-width: 767px)').matches;
+      setTimeout(function(){
+        c.classList.add('sc-pulse');
+        c.querySelector('.scc-btn').addEventListener('animationend',function(e){ if(e.animationName==='scCreditsPulse') c.classList.remove('sc-pulse'); },{once:true});
+      }, drawn?300:1350);   // tras el trazo de 1,2 s; en ordenador con la entrada ya vista, casi al momento
+    }
+    if(s.classList.contains('in')) pulse();
+    else new MutationObserver(function(ms,mo){ if(s.classList.contains('in')){ mo.disconnect(); pulse(); } }).observe(s,{attributes:true,attributeFilter:['class']});
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+<!-- /sc-footer-pulse -->
