@@ -121,10 +121,21 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     ':host(.sc-wallet-expected:not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section.hidden{display:block!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section{position:relative!important;min-height:40px!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section::before{content:""!important;position:absolute!important;left:50%!important;top:-4px!important;width:min(100%,270px)!important;height:var(--sc-pay-h,48px)!important;transform:translateX(-50%)!important;border:1px solid ' + W + '!important;box-sizing:border-box!important;pointer-events:none!important}',
-    /* borde al aparecer la tarjeta: la tarjeta entra sin borde y, cuando el contenido ya está, el borde fino se funde
-       en un segundo (sin brillo ni grosor): un pequeño cierre */
-    ':host #donation_form.sc-tracing{border-color:transparent!important;transition:border-color 1s ease!important}',
-    ':host #donation_form.sc-tracing.sc-traced{border-color:' + W + '!important}',
+    /* al pulsar Crypto u Other payment methods, un trazo blanco de 3 px recorre el borde de la tarjeta en un gesto
+       (4 × 0,13 s), brilla y se apaga en una sola curva (1 s) mientras se pasa a la pantalla siguiente: el mismo
+       lenguaje que el marco de cripto al copiar */
+    F + '{position:relative!important}',
+    F + ' .sc-ring{position:absolute!important;inset:-2px!important;pointer-events:none!important;z-index:50!important;opacity:0}',
+    F + ' .sc-ring.on{opacity:1}',
+    F + ' .sc-ring i{position:absolute!important;display:block!important;background:' + W + '!important;transition:transform .13s linear}',
+    F + ' .sc-ring.rst,' + F + ' .sc-ring.rst i{transition:none!important;animation:none!important}',
+    F + ' .sc-ring .t{top:0;left:0;width:100%;height:3px;transform-origin:left center;transform:scaleX(0)}',
+    F + ' .sc-ring .r{top:0;right:0;width:3px;height:100%;transform-origin:center top;transform:scaleY(0);transition-delay:.13s}',
+    F + ' .sc-ring .b{bottom:0;right:0;width:100%;height:3px;transform-origin:right center;transform:scaleX(0);transition-delay:.26s}',
+    F + ' .sc-ring .l{bottom:0;left:0;width:3px;height:100%;transform-origin:center bottom;transform:scaleY(0);transition-delay:.39s}',
+    F + ' .sc-ring.drawn i{transform:none!important}',
+    F + ' .sc-ring.out{animation:scRingOut 1s cubic-bezier(.3,.1,.3,1) forwards}',
+    '@keyframes scRingOut{0%{opacity:1;filter:drop-shadow(0 0 0 transparent)}10%{opacity:1;filter:drop-shadow(0 0 7px rgba(255,255,255,.9))}100%{opacity:0;filter:drop-shadow(0 0 7px transparent)}}',
     /* comentario abierto: campo compacto de dos líneas con desplazamiento interno, sin relleno extra, para que quepa en la
        banda libre bajo los botones y la tarjeta mantenga su altura (si no cabe, la tarjeta crece lo justo). Los márgenes de
        los botones no cambian al abrirlo: estas reglas pesan más que las antiguas de «comentario abierto» */
@@ -138,7 +149,7 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     ':host(:not(.sc-wallet-expected)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked):has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-pay-gaveup) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked):has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-donate-no-wallet) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section{margin-top:40px!important}',
     ':host(:not(.sc-none)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section .sc-crypto-next.sc-crypto-pay{margin:0 auto!important}',
     /* movimiento reducido */
-    '@media(prefers-reduced-motion:reduce){' + F + ' button,' + F + ' .sc-crypto-pay{transition:none!important}' + F + ' .sc-trace{display:none!important}:host #donation_form.sc-tracing{border-color:' + W + '!important}}'
+    '@media(prefers-reduced-motion:reduce){' + F + ' button,' + F + ' .sc-crypto-pay{transition:none!important}' + F + ' .sc-ring{display:none!important}}'
   ].join('');
   // ¿habrá botón rápido? Apple Pay se sabe al instante; en Android se supone Google Pay (si no llega, se retira a los 7 s)
   var walletExpected = false;
@@ -154,7 +165,7 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     widget.classList.toggle('sc-wallet-expected', walletExpected);
     syncPayHeight(widget);
     earlyReveal(widget, root);
-    traceOnReveal(widget, root);
+    wirePayTrace(root);
     return true;
   }
   // La tarjeta se muestra en cuanto el formulario está pintado y quieto (150 ms), sin esperar al botón de Apple Pay,
@@ -178,25 +189,42 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
       if ((since && performance.now() - since >= 150) || performance.now() - t0 > 8000) { clearInterval(iv); widget.classList.add('sc-dbox-ready'); }
     }, 50);
   }
-  // Al aparecer la tarjeta (sc-dbox-ready en móvil, sc-show en ordenador), el borde surge en fundido con brillo y se asienta
-  function traceOnReveal(widget, root) {
-    if (widget.__scTrace || reduceMotion) return;
-    widget.__scTrace = true;
-    var mobile = window.matchMedia('(max-width: 767px)').matches;
-    function shown() { return mobile ? widget.classList.contains('sc-dbox-ready') : widget.classList.contains('sc-show'); }
-    function run() {
-      var form = root.querySelector('#donation_form');
-      if (!form || form.__scTraced) return;
-      form.__scTraced = true;
-      form.classList.add('sc-traced');                                     // el borde se funde (1 s)
-      setTimeout(function () { form.classList.remove('sc-tracing', 'sc-traced'); }, 1100);
+  // El trazo del borde: se dibuja en un gesto y luego brilla y se apaga en una sola curva
+  function ringTrace(root) {
+    var form = root.querySelector('#donation_form');
+    if (!form) return;
+    var r = form.querySelector(':scope > .sc-ring');
+    if (!r) {
+      r = document.createElement('span'); r.className = 'sc-ring'; r.setAttribute('aria-hidden', 'true');
+      r.innerHTML = '<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>';
+      form.appendChild(r);
     }
-    function hideBorder() { var form = root.querySelector('#donation_form'); if (form && !form.__scTraced) form.classList.add('sc-tracing'); }
-    hideBorder();                                                            // sin borde desde el principio
-    new MutationObserver(hideBorder).observe(root, { childList: true });     // por si el formulario se vuelve a crear
-    function arm() { setTimeout(run, mobile ? 500 : 1000); }                 // cuando el contenido ya está (fundido de .24 s / .8 s)
-    if (shown()) return arm();
-    new MutationObserver(function (ms, mo) { if (shown()) { mo.disconnect(); arm(); } }).observe(widget, { attributes: true, attributeFilter: ['class'] });
+    function reset() { r.classList.add('rst'); r.classList.remove('drawn', 'out', 'on'); void r.offsetWidth; r.classList.remove('rst'); }
+    clearTimeout(r.__t); reset();
+    r.classList.add('on'); void r.offsetWidth; r.classList.add('drawn');
+    r.__t = setTimeout(function () { r.classList.add('out'); }, 560);                     // tras los 4 × 130 ms
+    r.addEventListener('animationend', function h(e) { if (e.animationName === 'scRingOut') { r.removeEventListener('animationend', h); reset(); } });
+  }
+  // Al pulsar Crypto u Other payment methods con un importe elegido: primero el trazo, y a los 620 ms sigue el pulso
+  // original (la ida a /crypto o el paso 2 de Donorbox), con el trazo todavía brillando como transición.
+  // Apple Pay no se puede enganchar: su botón vive dentro del iframe de Stripe.
+  function wirePayTrace(root) {
+    if (root.__scPayTrace || reduceMotion) return;
+    root.__scPayTrace = true;
+    function amountChosen() {
+      if (root.querySelector('#suggested_amounts input:checked')) return true;
+      var c = root.querySelector('#custom_amount_input');
+      return !!(c && parseFloat(c.value) > 0);
+    }
+    root.addEventListener('click', function (e) {
+      var t = e.target && e.target.closest ? e.target.closest('#standard_checkout_section .sc-crypto-pay, #standard_checkout_section > button[type="submit"]') : null;
+      if (!t) return;
+      if (t.__scGo) { t.__scGo = false; return; }                                           // segundo pulso: pasa
+      if (!amountChosen()) return;                                                        // sin importe, Donorbox avisa como siempre
+      e.preventDefault(); e.stopImmediatePropagation();
+      ringTrace(root);
+      setTimeout(function () { t.__scGo = true; t.click(); }, 620);
+    }, true);
   }
   // los otros botones copian la altura del botón real de Apple Pay (Stripe decide esa altura).
   // El elemento está en el light DOM del widget y su iframe aparece más tarde: se vigila con observadores.
