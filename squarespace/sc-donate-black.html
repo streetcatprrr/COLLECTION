@@ -1,0 +1,130 @@
+<!-- sc-donate-black: el formulario de Donate (Donorbox) en negro con líneas blancas finas, como el resto de la web.
+     Paso 1: pestañas e importes con contorno (el elegido se rellena de blanco), «Other amount» escribe en blanco,
+     botones de pago con contorno y la misma letra que el de Apple Pay. Pasos 2 y 3: campos negros con contorno.
+     Apple Pay es el control oficial de Stripe: solo se le da ancho y se copia su altura para los otros botones.
+     Se inyecta como <style> al final del shadow root del widget, solo en la página Donate. -->
+<script>
+(function () {
+  'use strict';
+  if (window.__scDonateBlack2026) return;
+  window.__scDonateBlack2026 = true;
+  if (document.body.id !== 'collection-6934b65250af903b74bf9bdb') return;   // solo la página Donate
+  var W = '#fff', K = '#000', M = 'rgba(255,255,255,.62)';
+  var F = ':host #donation_form';
+  var P = F + ' #page_select_amount ';
+  var D = F + ' #page_donor_info ';
+  var Y = F + ' #page_payment ';
+  var SYS = '-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif';
+  var SERIF = '"Cormorant Garamond",Georgia,serif';
+  var LABEL = 'font-family:' + SERIF + '!important;font-size:12px!important;font-weight:500!important;letter-spacing:1.6px!important;text-transform:uppercase!important;color:' + M + '!important;';
+  var BTN = 'box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;max-width:270px!important;' +
+    'height:var(--sc-pay-h,44px)!important;min-height:var(--sc-pay-h,44px)!important;max-height:var(--sc-pay-h,44px)!important;margin:0 auto!important;padding:0 12px!important;' +
+    'border:1px solid ' + W + '!important;border-radius:0!important;background:transparent!important;color:' + W + '!important;' +
+    'font-family:' + SYS + '!important;font-size:17px!important;font-weight:500!important;letter-spacing:0!important;text-transform:none!important;line-height:1!important;' +
+    'box-shadow:none!important;transform:none!important;animation:none!important;opacity:1!important;cursor:pointer!important;-webkit-tap-highlight-color:transparent!important;' +
+    'transition:background-color .2s ease,color .2s ease!important;';
+  var css = [
+    /* variables del tema de Donorbox: cubren lo genérico de los tres pasos */
+    F + '{--background-color:' + K + ';--font-color:' + W + ';--text-color:' + W + ';--border-radius:0;--border-color:' + W + ';--donation-form-border-color:' + W + ';' +
+      '--lighter-basic-color:' + M + ';--header-elements-color:' + M + ';' +
+      '--interactive-elements-text-color:' + W + ';--interactive-elements-background-color:' + K + ';--interactive-elements-border-color:' + W + ';--interactive-elements-selected-color:' + W + ';--interactive-elements-focus-color:' + W + ';' +
+      '--interval-selector-background:transparent;--interval-selector-border-color:' + W + ';--interval-selector-selected-background:' + W + ';--interval-selector-selected-text-color:' + K + ';--interval-selector-text-color:' + M + ';--interval-selector-filled-border:1px solid ' + W + ';--interval-selector-selected-border-width:1px;--interval-selector-selected-border-color:' + W + ';--interval-selector-focus-color:' + W + ';' +
+      '--amount-selector-text-color:' + W + ';--amount-selector-selected-text-color:' + K + ';--amount-selector-border-color:' + W + ';--amount-selector-selected-border-color:' + W + ';--amount-selector-background:transparent;--amount-selector-selected-background:' + W + ';--amount-selector-selected-box-shadow:none;--amount-selector-focus-color:' + W + ';' +
+      '--custom-amount-default-color:' + W + ';--custom-amount-small-color:' + M + ';--custom-amount-selected-placeholder-color:' + M + ';' +
+      '--primary-button-color:transparent;--primary-button-text-color:' + W + ';--primary-button-shape:0;--primary-button-border-width:1px;--primary-button-border-color:' + W + ';' +
+      '--secondary-buttons-color:' + W + ';--secondary-buttons-selected-color:' + W + ';--secondary-buttons-text-color:' + W + ';--secondary-buttons-selected-text-color:' + K + ';--secondary-buttons-shape:0;' +
+      '--checkbox-radio-selected-background:' + W + ';--checkbox-radio-selected-color:' + K + ';--powered-by-text-color:' + W + '}',
+    /* tarjeta */
+    ':host #loading,' + F + ',' + F + ' #donation_form_content,' + F + ' #page_select_amount,' + F + ' #page_donor_info,' + F + ' #page_payment,' + F + ' #page_thank_you{background:' + K + '!important;color:' + W + '!important}',
+    F + '{border:1px solid ' + W + '!important;box-shadow:none!important;border-radius:0!important}',
+    F + '>header{background:' + K + '!important;border:0!important;border-bottom:1px solid ' + W + '!important;color:' + W + '!important}',
+    F + ' fieldset{background:transparent!important;background-color:transparent!important;box-shadow:none!important}',
+    F + ' *{-webkit-text-fill-color:currentColor!important}',
+    /* paso 1: frecuencia */
+    P + '#intervals{gap:0!important;justify-content:center!important}',
+    P + '#intervals label{background:transparent!important;border:1px solid ' + W + '!important;border-radius:0!important;margin-left:-1px!important;box-shadow:none!important;' + LABEL + 'padding:0 10px!important;height:32px!important;display:flex!important;align-items:center!important}',
+    P + '#intervals label:has(input:checked){background:' + W + '!important;color:' + K + '!important}',
+    /* paso 1: importes */
+    P + '#suggested_amounts label,' + P + '#custom_amount label{background:transparent!important;border:1px solid ' + W + '!important;border-radius:0!important;box-shadow:none!important}',
+    P + '#suggested_amounts label *,' + P + '#custom_amount label *{font-family:' + SERIF + '!important;color:' + W + '!important;background:transparent!important}',
+    P + '#suggested_amounts label span{font-size:20px!important;font-weight:500!important}',
+    P + '#suggested_amounts label:has(input:checked){background:' + W + '!important}',
+    P + '#suggested_amounts label:has(input:checked) *{color:' + K + '!important}',
+    P + '#custom_amount .custom-amount-placeholder{' + LABEL + '}',
+    P + '#custom_amount input#custom_amount_input{font-size:22px!important;font-weight:500!important;caret-color:' + W + '!important;outline:none!important}',
+    P + '#custom_amount input#custom_amount_input::placeholder{color:' + M + '!important}',
+    ':host #donation_form#donation_form #page_select_amount#page_select_amount #custom_amount#custom_amount input#custom_amount_input{box-shadow:none!important;-webkit-box-shadow:none!important;background:transparent!important}',
+    /* paso 1: comentario */
+    P + '#comment{background:transparent!important;border:0!important;box-shadow:none!important}',
+    P + '#comment>label{' + LABEL + '}',
+    P + '#leave_a_comment{appearance:none!important;-webkit-appearance:none!important;width:12px!important;height:12px!important;border:1px solid ' + W + '!important;border-radius:0!important;background:transparent!important;margin:0 8px 0 0!important}',
+    P + '#leave_a_comment:checked{background:' + W + '!important}',
+    P + '#comment textarea{background:' + K + '!important;color:' + W + '!important;border:1px solid ' + W + '!important;border-radius:0!important;caret-color:' + W + '!important}',
+    /* paso 1: botones de pago (misma letra que Apple Pay; Apple Pay solo recibe ancho) */
+    P + '#standard_checkout_section{row-gap:10px!important}',
+    P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay,' + P + '#standard_checkout_section>button[type="submit"]{' + BTN + '}',
+    P + '#standard_checkout_section>button[type="submit"] svg{display:none!important}',
+    '@media(hover:hover) and (pointer:fine){' + P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay:hover,' + P + '#standard_checkout_section>button[type="submit"]:hover{background:' + W + '!important;color:' + K + '!important}}',
+    P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay:active,' + P + '#standard_checkout_section>button[type="submit"]:active{background:' + W + '!important;color:' + K + '!important;transition-duration:.09s!important}',
+    P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay:focus-visible,' + P + '#standard_checkout_section>button[type="submit"]:focus-visible{outline:1px solid ' + W + '!important;outline-offset:3px!important}',
+    P + '#express_checkout_section slot[name="express_checkout"]{display:block!important;max-width:270px!important;margin:0 auto!important}',
+    P + '#express_checkout_section slot[name="express_checkout"]::slotted(.StripeElement){max-width:270px!important;margin:0 auto!important}',
+    /* pasos 2 y 3: campos, etiquetas, casillas y botón principal */
+    D + 'label,' + Y + 'label{' + LABEL + '}',
+    D + 'input[type="text"],' + D + 'input[type="email"],' + D + 'input[type="tel"],' + D + 'select,' + D + 'textarea,' + Y + 'input[type="text"],' + Y + 'select{background:' + K + '!important;color:' + W + '!important;border:1px solid ' + W + '!important;border-radius:0!important;box-shadow:none!important;caret-color:' + W + '!important;font-family:' + SERIF + '!important}',
+    ':host #donation_form#donation_form input:-webkit-autofill,:host #donation_form#donation_form input:-webkit-autofill:focus{-webkit-box-shadow:0 0 0 1000px ' + K + ' inset!important;box-shadow:0 0 0 1000px ' + K + ' inset!important;-webkit-text-fill-color:' + W + '!important;caret-color:' + W + '!important}',
+    D + 'input::placeholder,' + Y + 'input::placeholder{color:rgba(255,255,255,.45)!important}',
+    D + 'input:focus,' + Y + 'input:focus{outline:none!important;border-color:' + W + '!important}',
+    D + 'img.icon{filter:invert(1)!important}',
+    D + 'input[type="checkbox"],' + Y + 'input[type="checkbox"]{appearance:none!important;-webkit-appearance:none!important;width:12px!important;height:12px!important;border:1px solid ' + W + '!important;border-radius:0!important;background:transparent!important}',
+    D + 'input[type="checkbox"]:checked,' + Y + 'input[type="checkbox"]:checked{background:' + W + '!important}',
+    D + '.help-hint,' + Y + '.help-hint{border-color:' + M + '!important;color:' + M + '!important}',
+    D + 'button[type="submit"],' + Y + '#submit_button{' + BTN + 'max-width:none!important}',
+    '@media(hover:hover) and (pointer:fine){' + D + 'button[type="submit"]:hover,' + Y + '#submit_button:hover{background:' + W + '!important;color:' + K + '!important}}',
+    D + 'button[type="submit"]:active,' + Y + '#submit_button:active{background:' + W + '!important;color:' + K + '!important;transition-duration:.09s!important}',
+    Y + '#recaptcha_description,' + Y + '#recaptcha_description a{color:' + M + '!important}',
+    Y + '#recaptcha_description a{text-decoration:underline!important}',
+    /* movimiento reducido */
+    '@media(prefers-reduced-motion:reduce){' + F + ' button,' + F + ' .sc-crypto-pay{transition:none!important}}'
+  ].join('');
+  function mount() {
+    var widget = document.querySelector('#page dbox-widget');
+    var root = widget && widget.shadowRoot;
+    if (!root) return false;
+    var style = root.querySelector('#sc-donate-black');
+    if (!style) { style = document.createElement('style'); style.id = 'sc-donate-black'; style.textContent = css; }
+    root.appendChild(style);                                 // siempre el último: gana a los bloques anteriores
+    syncPayHeight(widget, root);
+    return true;
+  }
+  // los otros botones copian la altura del botón real de Apple Pay (Stripe decide esa altura)
+  function syncPayHeight(widget, root) {
+    if (widget.__scPayH) return;
+    var slot = root.querySelector('#express_checkout_section slot[name="express_checkout"]');
+    if (!slot) return;
+    widget.__scPayH = true;
+    function apply() {
+      var el = slot.assignedElements ? slot.assignedElements()[0] : null;
+      var h = el ? Math.round(el.getBoundingClientRect().height) : 0;
+      if (h >= 36 && h <= 64) widget.style.setProperty('--sc-pay-h', h + 'px');
+    }
+    apply();
+    slot.addEventListener('slotchange', function () { apply(); setTimeout(apply, 600); });
+    if (window.ResizeObserver) {
+      var ro = new ResizeObserver(apply);
+      slot.addEventListener('slotchange', function () { (slot.assignedElements() || []).forEach(function (e) { ro.observe(e); }); });
+      (slot.assignedElements ? slot.assignedElements() : []).forEach(function (e) { ro.observe(e); });
+    }
+  }
+  if (!mount()) {
+    var finder = setInterval(function () { if (mount()) clearInterval(finder); }, 25);
+    setTimeout(function () { clearInterval(finder); }, 15000);
+  }
+  var tries = 0, keep = setInterval(function () {
+    if (++tries > 40) return clearInterval(keep);
+    var w = document.querySelector('#page dbox-widget'); var r = w && w.shadowRoot; var s = r && r.querySelector('#sc-donate-black');
+    if (s && s !== r.lastElementChild && r.lastElementChild.tagName === 'STYLE') r.appendChild(s);
+  }, 250);
+})();
+</script>
+<!-- /sc-donate-black -->
