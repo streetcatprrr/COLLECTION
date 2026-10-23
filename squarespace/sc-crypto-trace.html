@@ -1,17 +1,18 @@
-<!-- sc-crypto-trace: al copiar una dirección, se traza un marco del color de la cripto pegado al QR (grosor --sq-w, 3 px), parpadea una vez y desaparece -->
+<!-- sc-crypto-trace: al copiar una dirección, un trazo del color de la cripto recorre el perímetro del QR (grosor --sq-w, 3 px)
+     en un solo gesto (arriba → derecha → abajo → izquierda, 0,36 s), destella una vez con halo (0,25 s) y se apaga (0,2 s) -->
 <style>
 #streetcat-crypto-donations-v1 .scd-qr-frame{position:relative}
-#streetcat-crypto-donations-v1 .scq-ring{--sq-w:3px;position:absolute;inset:calc(var(--sq-w) * -1);pointer-events:none;opacity:0;transition:opacity .3s ease}
+#streetcat-crypto-donations-v1 .scq-ring{--sq-w:3px;--sq-d:.09s;position:absolute;inset:calc(var(--sq-w) * -1);pointer-events:none;opacity:0;transition:opacity .2s ease}
 #streetcat-crypto-donations-v1 .scq-ring.on{opacity:1;transition:none}
-#streetcat-crypto-donations-v1 .scq-ring i{position:absolute;display:block;transition:transform .5s ease-in-out}
+#streetcat-crypto-donations-v1 .scq-ring i{position:absolute;display:block;transition:transform var(--sq-d) linear}
 #streetcat-crypto-donations-v1 .scq-ring.rst i{transition:none!important}
 #streetcat-crypto-donations-v1 .scq-ring .t{top:0;left:0;width:100%;height:var(--sq-w);transform-origin:left center;transform:scaleX(0);background:var(--sq-t)}
-#streetcat-crypto-donations-v1 .scq-ring .r{top:0;right:0;width:var(--sq-w);height:100%;transform-origin:center top;transform:scaleY(0);background:var(--sq-r)}
-#streetcat-crypto-donations-v1 .scq-ring .b{bottom:0;right:0;width:100%;height:var(--sq-w);transform-origin:right center;transform:scaleX(0);background:var(--sq-b)}
-#streetcat-crypto-donations-v1 .scq-ring .l{bottom:0;left:0;width:var(--sq-w);height:100%;transform-origin:center bottom;transform:scaleY(0);background:var(--sq-l)}
+#streetcat-crypto-donations-v1 .scq-ring .r{top:0;right:0;width:var(--sq-w);height:100%;transform-origin:center top;transform:scaleY(0);background:var(--sq-r);transition-delay:var(--sq-d)}
+#streetcat-crypto-donations-v1 .scq-ring .b{bottom:0;right:0;width:100%;height:var(--sq-w);transform-origin:right center;transform:scaleX(0);background:var(--sq-b);transition-delay:calc(var(--sq-d) * 2)}
+#streetcat-crypto-donations-v1 .scq-ring .l{bottom:0;left:0;width:var(--sq-w);height:100%;transform-origin:center bottom;transform:scaleY(0);background:var(--sq-l);transition-delay:calc(var(--sq-d) * 3)}
 #streetcat-crypto-donations-v1 .scq-ring.drawn i{transform:none}
-#streetcat-crypto-donations-v1 .scq-ring.flash{animation:scqFlash .4s ease-out}
-@keyframes scqFlash{0%{filter:brightness(1)}30%{filter:brightness(1.8) drop-shadow(0 0 3px var(--sq-g))}100%{filter:brightness(1)}}
+#streetcat-crypto-donations-v1 .scq-ring.flash{animation:scqFlash .25s ease-out}
+@keyframes scqFlash{0%{filter:brightness(1)}35%{filter:brightness(2) drop-shadow(0 0 7px var(--sq-g))}100%{filter:brightness(1)}}
 #streetcat-crypto-donations-v1 .scq-ring[data-coin="bitcoin"]{--sq-t:#F7931A;--sq-r:#F7931A;--sq-b:#F7931A;--sq-l:#F7931A;--sq-g:#F7931A}
 #streetcat-crypto-donations-v1 .scq-ring[data-coin="ethereum"]{--sq-t:#627EEA;--sq-r:#627EEA;--sq-b:#627EEA;--sq-l:#627EEA;--sq-g:#627EEA}
 #streetcat-crypto-donations-v1 .scq-ring[data-coin="usdt-tron"]{--sq-t:#26A17B;--sq-r:#26A17B;--sq-b:#26A17B;--sq-l:#26A17B;--sq-g:#26A17B}
@@ -30,12 +31,12 @@
       r.setAttribute('data-coin',coin); return r;
     }
     function reset(r){r.classList.add('rst');r.classList.remove('drawn','flash','on');void r.offsetWidth;r.classList.remove('rst');}
-    function hide(r){clearTimeout(r.__t);r.classList.remove('on','flash');r.__t=setTimeout(function(){reset(r);},350);}
+    function hide(r){clearTimeout(r.__t);r.classList.remove('on','flash');r.__t=setTimeout(function(){reset(r);},240);}
     function show(card){
       var f=card.querySelector('.scd-qr-frame'); if(!f) return;
       var r=ringOf(f,card.getAttribute('data-coin')||''); clearTimeout(r.__t);
       reset(r); r.classList.add('on'); void r.offsetWidth; r.classList.add('drawn');
-      r.__t=setTimeout(function(){ if(reduce){hide(r);} else {r.classList.add('flash');} }, reduce?700:500);
+      r.__t=setTimeout(function(){ if(reduce){hide(r);} else {r.classList.add('flash');} }, reduce?700:380);   // tras los 4 × 90 ms del trazo
     }
     root.addEventListener('animationend',function(e){var r=e.target;if(r.classList&&r.classList.contains('scq-ring')&&e.animationName==='scqFlash')hide(r);});
     new MutationObserver(function(ms){
