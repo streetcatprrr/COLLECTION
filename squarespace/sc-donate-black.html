@@ -17,6 +17,11 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
    negro con el logotipo en blanco, igual que Crypto y Other. */
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] > div{width:350px!important;max-width:none!important}
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] iframe{zoom:1!important;clip-path:none!important;transform:none!important;filter:invert(1)!important;-webkit-filter:invert(1)!important}
+/* mientras Stripe carga el botón, su elemento es invisible dentro del marco reservado; al medir, aparece en fundido */
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc-wallet-expected:not(.sc-pay-live) > [slot="express_checkout"]{opacity:0!important}
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc-pay-live > [slot="express_checkout"]{opacity:1!important;transition:opacity .3s ease!important}
+/* el fundido de entrada de la tarjeta en ordenador pasa de 1,5 s a 0,8 s (en móvil ya era de 0,24 s) */
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc-show{animation-duration:.8s!important}
 </style>
 <script>
 (function () {
@@ -69,8 +74,15 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
     P + '#custom_amount input#custom_amount_input{font-size:22px!important;font-weight:500!important;caret-color:' + W + '!important;outline:none!important}',
     P + '#custom_amount input#custom_amount_input::placeholder{color:' + M + '!important}',
     ':host #donation_form#donation_form #page_select_amount#page_select_amount #custom_amount#custom_amount input#custom_amount_input{box-shadow:none!important;-webkit-box-shadow:none!important;background:transparent!important}',
+    /* paso 1: orden de los bloques. «Write us a comment» pasa al final, debajo de los botones de pago, para que al abrirse
+       el comentario crezca hacia abajo sin empujar los botones. El panel pasa a columna flex (los márgenes dejan de
+       solaparse, por eso se anulan los de arriba de importes y «Other amount») */
+    P + '#standard_donation_panel{display:flex!important;flex-direction:column!important}',
+    P + '#standard_donation_panel>#suggested_amounts,' + P + '#standard_donation_panel>#custom_amount{margin-top:0!important}',
+    P + '#standard_donation_panel>#comment{order:10!important;margin-top:24px!important}',
     /* paso 1: comentario */
     P + '#comment{background:transparent!important;border:0!important;box-shadow:none!important}',
+    P + '#comment .switch-content label{' + LABEL + '}',
     P + '#comment>label{' + LABEL + '}',
     P + '#leave_a_comment{appearance:none!important;-webkit-appearance:none!important;width:12px!important;height:12px!important;border:1px solid ' + W + '!important;border-radius:0!important;background:transparent!important;margin:0 8px 0 0!important}',
     P + '#leave_a_comment:checked{background:' + W + '!important}',
@@ -82,7 +94,7 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
     P + '#express_checkout_section slot[name="express_checkout"]{display:block!important;width:100%!important;max-width:270px!important;margin:0 auto!important;transform:none!important}',
     P + '#express_checkout_section slot[name="express_checkout"]::slotted(.StripeElement){width:100%!important;max-width:270px!important;margin:0 auto!important}',
     P + '#standard_checkout_section{margin-top:22px!important;margin-bottom:0!important;row-gap:18px!important;gap:18px!important}',
-    F + ' #page_select_amount:has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-donate-no-wallet) #donation_form #page_select_amount #standard_checkout_section{margin-top:40px!important}',
+    ':host(:not(.sc-wallet-expected)) #donation_form #page_select_amount:has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-pay-gaveup) #donation_form #page_select_amount:has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-donate-no-wallet) #donation_form #page_select_amount #standard_checkout_section{margin-top:40px!important}',
     /* paso 1: botones de pago (misma letra que Apple Pay) */
     P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay,' + P + '#standard_checkout_section>button[type="submit"]{' + BTN + '}',
     P + '#standard_checkout_section>button[type="submit"] svg{display:none!important}',
@@ -104,9 +116,30 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
     D + 'button[type="submit"]:active,' + Y + '#submit_button:active{background:' + W + '!important;color:' + K + '!important;transition-duration:.09s!important}',
     Y + '#recaptcha_description,' + Y + '#recaptcha_description a{color:' + M + '!important}',
     Y + '#recaptcha_description a{text-decoration:underline!important}',
+    /* Apple Pay esperado pero aún no cargado: la sección ya ocupa su sitio y el marco se dibuja vacío (::before);
+       cuando el botón real mide, el marco pasa a ser el del propio botón, con la misma geometría */
+    ':host(.sc-wallet-expected:not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section.hidden{display:block!important}',
+    ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section{position:relative!important;min-height:40px!important}',
+    ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section::before{content:""!important;position:absolute!important;left:50%!important;top:-4px!important;width:min(100%,270px)!important;height:var(--sc-pay-h,48px)!important;transform:translateX(-50%)!important;border:1px solid ' + W + '!important;box-sizing:border-box!important;pointer-events:none!important}',
+    /* trazo blanco al aparecer la tarjeta: el borde se dibuja en un solo gesto (arriba → derecha → abajo → izquierda) */
+    F + '{position:relative!important}',
+    ':host #donation_form.sc-tracing{border-color:transparent!important}',
+    F + ' .sc-trace{position:absolute!important;inset:-1px!important;pointer-events:none!important;z-index:50!important}',
+    F + ' .sc-trace i{position:absolute!important;display:block!important;background:' + W + '!important;transition:transform .15s linear!important}',
+    F + ' .sc-trace .t{top:0;left:0;width:100%;height:1px;transform-origin:left center;transform:scaleX(0)}',
+    F + ' .sc-trace .r{top:0;right:0;width:1px;height:100%;transform-origin:center top;transform:scaleY(0);transition-delay:.15s!important}',
+    F + ' .sc-trace .b{bottom:0;right:0;width:100%;height:1px;transform-origin:right center;transform:scaleX(0);transition-delay:.3s!important}',
+    F + ' .sc-trace .l{bottom:0;left:0;width:1px;height:100%;transform-origin:center bottom;transform:scaleY(0);transition-delay:.45s!important}',
+    F + ' .sc-trace.go i{transform:none!important}',
+    F + ' .sc-trace.glow{animation:scDonateGlow .8s ease-out forwards}',
+    '@keyframes scDonateGlow{0%{filter:drop-shadow(0 0 6px rgba(255,255,255,.95))}100%{filter:drop-shadow(0 0 0 transparent)}}',
     /* movimiento reducido */
-    '@media(prefers-reduced-motion:reduce){' + F + ' button,' + F + ' .sc-crypto-pay{transition:none!important}}'
+    '@media(prefers-reduced-motion:reduce){' + F + ' button,' + F + ' .sc-crypto-pay{transition:none!important}' + F + ' .sc-trace{display:none!important}:host #donation_form.sc-tracing{border-color:' + W + '!important}}'
   ].join('');
+  // ¿habrá botón rápido? Apple Pay se sabe al instante; en Android se supone Google Pay (si no llega, se retira a los 7 s)
+  var walletExpected = false;
+  try { walletExpected = (typeof ApplePaySession !== 'undefined' && ApplePaySession.canMakePayments()) || /Android/i.test(navigator.userAgent); } catch (e) {}
+  var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function mount() {
     var widget = document.querySelector('#page dbox-widget');
     var root = widget && widget.shadowRoot;
@@ -114,8 +147,52 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
     var style = root.querySelector('#sc-donate-black');
     if (!style) { style = document.createElement('style'); style.id = 'sc-donate-black'; style.textContent = css; }
     root.appendChild(style);                                 // siempre el último: gana a los bloques anteriores
+    widget.classList.toggle('sc-wallet-expected', walletExpected);
     syncPayHeight(widget);
+    earlyReveal(widget, root);
+    traceOnReveal(widget, root);
     return true;
+  }
+  // La tarjeta se muestra en cuanto el formulario está pintado y quieto (150 ms), sin esperar al botón de Apple Pay,
+  // que ya tiene su hueco reservado. El guion antiguo esperaba al botón (y 350 ms más): de ahí el retraso.
+  function earlyReveal(widget, root) {
+    if (widget.__scEarly) return;
+    widget.__scEarly = true;
+    var prev = null, since = 0, t0 = performance.now();
+    if (walletExpected) setTimeout(function () { if (!widget.classList.contains('sc-pay-live')) widget.classList.add('sc-pay-gaveup'); }, 7000);
+    var iv = setInterval(function () {
+      if (widget.classList.contains('sc-dbox-ready')) return clearInterval(iv);
+      var loader = root.querySelector('#loading');
+      var complete = loader && /\bcomplete\b/.test(loader.getAttribute('part') || '');
+      var card = root.querySelector('#page_select_amount'), cry = root.querySelector('#standard_checkout_section .sc-crypto-pay'), oth = root.querySelector('#standard_checkout_section button');
+      var ok = complete && card && cry && oth && root.querySelector('#sc-donate-black');
+      var box = null;
+      if (ok) { box = []; [card, cry, oth].forEach(function (e) { var b = e.getBoundingClientRect(); box.push(b.x, b.y, b.width, b.height); }); }
+      var stable = box && prev && box.length === prev.length && box.every(function (v, i) { return Math.abs(v - prev[i]) < .5; });
+      prev = box;
+      if (stable) { if (!since) since = performance.now(); } else since = 0;
+      if ((since && performance.now() - since >= 150) || performance.now() - t0 > 8000) { clearInterval(iv); widget.classList.add('sc-dbox-ready'); }
+    }, 50);
+  }
+  // Al aparecer la tarjeta (sc-dbox-ready en móvil, sc-show en ordenador), el borde se traza en un gesto y brilla una vez
+  function traceOnReveal(widget, root) {
+    if (widget.__scTrace || reduceMotion) return;
+    widget.__scTrace = true;
+    var mobile = window.matchMedia('(max-width: 767px)').matches;
+    function shown() { return mobile ? widget.classList.contains('sc-dbox-ready') : widget.classList.contains('sc-show'); }
+    function run() {
+      var form = root.querySelector('#donation_form');
+      if (!form || form.querySelector('.sc-trace')) return;
+      var ov = document.createElement('span'); ov.className = 'sc-trace'; ov.setAttribute('aria-hidden', 'true');
+      ov.innerHTML = '<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>';
+      form.classList.add('sc-tracing'); form.appendChild(ov);
+      void ov.offsetWidth; ov.classList.add('go');
+      setTimeout(function () { form.classList.remove('sc-tracing'); ov.classList.add('glow'); }, 620);
+      setTimeout(function () { ov.remove(); }, 1500);
+    }
+    function arm() { setTimeout(run, mobile ? 260 : 820); }   // tras el fundido de entrada (.24 s móvil, .8 s ordenador)
+    if (shown()) return arm();
+    new MutationObserver(function (ms, mo) { if (shown()) { mo.disconnect(); arm(); } }).observe(widget, { attributes: true, attributeFilter: ['class'] });
   }
   // los otros botones copian la altura del botón real de Apple Pay (Stripe decide esa altura).
   // El elemento está en el light DOM del widget y su iframe aparece más tarde: se vigila con observadores.
@@ -125,7 +202,7 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
     function apply() {
       var el = widget.querySelector(':scope > [slot="express_checkout"]');   // su caja es la del marco blanco
       var h = el ? Math.round(el.offsetHeight) : 0;              // offsetHeight: sin la escala del widget en móvil
-      if (h >= 36 && h <= 64) widget.style.setProperty('--sc-pay-h', h + 'px');
+      if (h >= 36 && h <= 64) { widget.style.setProperty('--sc-pay-h', h + 'px'); widget.classList.add('sc-pay-live'); }
     }
     var ro = window.ResizeObserver ? new ResizeObserver(apply) : null;
     function watch() {

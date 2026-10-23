@@ -1,0 +1,13 @@
+<!-- sc-donate-preconnect: en Donate, abre las conexiones con Donorbox y Stripe y precarga sus guiones desde el principio
+     de la página (Donorbox los pide tarde, encadenados: widgets.js → loading.js → formulario → stripe.js). Solo red; no cambia nada visible. -->
+<link rel="preconnect" href="https://donorbox.org">
+<link rel="preconnect" href="https://js.stripe.com">
+<script>
+(function () {
+  if (location.pathname.replace(/\/$/, '') !== '/donate') return;
+  ['https://donorbox.org/widgets.js', 'https://donorbox.org/widgets/donation_form/base/loading.js', 'https://js.stripe.com/dahlia/stripe.js'].forEach(function (href) {
+    var l = document.createElement('link'); l.rel = 'preload'; l.as = 'script'; l.href = href; document.head.appendChild(l);
+  });
+})();
+</script>
+<!-- /sc-donate-preconnect -->
