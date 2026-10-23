@@ -221,8 +221,8 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
       if (!t) return;
       if (t.__scGo) { t.__scGo = false; return; }                                           // segundo pulso: pasa
       if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;      // pestaña nueva, etc.
-      if (!amountChosen()) return;                                                        // sin importe, Donorbox avisa como siempre
       var isLink = t.matches('.sc-crypto-pay');
+      if (!isLink && !amountChosen()) return;                                             // Other sin importe: Donorbox avisa como siempre
       var href = isLink ? (t.getAttribute('href') || '/crypto') : null;
       e.preventDefault(); e.stopImmediatePropagation();
       ringTrace(root);
@@ -236,6 +236,17 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
         }
       }, 620);
     }, true);
+    // Apple Pay: el toque ocurre dentro del iframe de Stripe y no se puede ver, pero al tocarlo el foco de la página
+    // pasa a ese iframe; en ese instante se lanza el trazo (la hoja de Apple Pay se abre encima, como siempre)
+    var widget = document.querySelector('#page dbox-widget');
+    window.addEventListener('blur', function () {
+      setTimeout(function () {
+        var ae = document.activeElement, el = widget && widget.querySelector(':scope > [slot="express_checkout"]');
+        if (!ae || !el || !el.contains(ae)) return;
+        if (el.__scTraceAt && performance.now() - el.__scTraceAt < 1500) return;   // no repetir en ráfaga
+        el.__scTraceAt = performance.now(); ringTrace(root);
+      }, 0);
+    });
   }
   // los otros botones copian la altura del botón real de Apple Pay (Stripe decide esa altura).
   // El elemento está en el light DOM del widget y su iframe aparece más tarde: se vigila con observadores.
