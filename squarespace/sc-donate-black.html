@@ -9,10 +9,12 @@
    recorte del ajuste antiguo de móvil, iframe en bloque y contorno blanco de 1 px pegado a su caja */
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]{display:block!important;box-sizing:border-box!important;width:100%!important;max-width:270px!important;min-width:0!important;margin:0 auto!important;padding:0!important;overflow:hidden!important;outline:1px solid #fff!important;outline-offset:-1px!important;border-radius:0!important}
 /* Donorbox configura el botón rápido de Stripe con una sola fila y columna y «desbordamiento automático»: con Apple Pay y
-   Link disponibles, Stripe pinta Apple Pay y, a su derecha, un botón «···» de unos 56 px más 4 px de hueco. Se da al
-   contenedor interno 60 px de más (330) para que Apple Pay mida 270 y el «···» quede fuera del marco, recortado. */
-html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] > div{width:330px!important;max-width:none!important}
-html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] iframe{zoom:1!important;clip-path:none!important;transform:none!important}
+   Link disponibles, Stripe pinta Apple Pay (≈78 % del ancho) y, a su derecha, un hueco y un botón «···» (≈22 %, proporcional).
+   El contenedor interno mide 350 px para que Apple Pay salga de ≈272 px y el marco de 270 recorte el hueco y el «···».
+   Donorbox entrega el botón en tema blanco (con el color del botón en negro o en blanco), así que se invierte:
+   negro con el logotipo en blanco, igual que Crypto y Other. */
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] > div{width:350px!important;max-width:none!important}
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] iframe{zoom:1!important;clip-path:none!important;transform:none!important;filter:invert(1)!important;-webkit-filter:invert(1)!important}
 </style>
 <script>
 (function () {
