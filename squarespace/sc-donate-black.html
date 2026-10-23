@@ -121,19 +121,20 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     ':host(.sc-wallet-expected:not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section.hidden{display:block!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section{position:relative!important;min-height:40px!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section::before{content:""!important;position:absolute!important;left:50%!important;top:-4px!important;width:min(100%,270px)!important;height:var(--sc-pay-h,48px)!important;transform:translateX(-50%)!important;border:1px solid ' + W + '!important;box-sizing:border-box!important;pointer-events:none!important}',
-    /* trazo blanco al aparecer la tarjeta: el borde se dibuja en un solo gesto (arriba → derecha → abajo → izquierda,
-       4 × 0,4 s) y, al cerrarse, la línea engorda a 3 px con un halo ancho y vuelve a 1 px mientras el halo se apaga (1,2 s) */
+    /* borde al aparecer la tarjeta: surge en fundido ya con brillo (línea de 3 px y halo de 16 px) y se asienta despacio
+       hasta quedarse en la línea fina de 1 px. Un solo movimiento de 2,4 s, al ritmo pausado del resto de la web */
     F + '{position:relative!important}',
     ':host #donation_form.sc-tracing{border-color:transparent!important}',
-    F + ' .sc-trace{--sc-td:.4s;position:absolute!important;inset:-1px!important;pointer-events:none!important;z-index:50!important}',
-    F + ' .sc-trace i{position:absolute!important;display:block!important;background:' + W + '!important;transition:transform var(--sc-td) linear!important}',
-    F + ' .sc-trace .t{top:0;left:0;width:100%;height:1px;transform-origin:left center;transform:scaleX(0)}',
-    F + ' .sc-trace .r{top:0;right:0;width:1px;height:100%;transform-origin:center top;transform:scaleY(0);transition-delay:var(--sc-td)!important}',
-    F + ' .sc-trace .b{bottom:0;right:0;width:100%;height:1px;transform-origin:right center;transform:scaleX(0);transition-delay:calc(var(--sc-td) * 2)!important}',
-    F + ' .sc-trace .l{bottom:0;left:0;width:1px;height:100%;transform-origin:center bottom;transform:scaleY(0);transition-delay:calc(var(--sc-td) * 3)!important}',
-    F + ' .sc-trace.go i{transform:none!important}',
-    F + ' .sc-trace.glow i{animation:scDonateGlow 1.2s cubic-bezier(.2,.6,.3,1) forwards}',
-    '@keyframes scDonateGlow{0%{box-shadow:0 0 0 0 ' + W + ',0 0 0 0 rgba(255,255,255,0)}14%{box-shadow:0 0 0 1px ' + W + ',0 0 14px 4px rgba(255,255,255,.85)}100%{box-shadow:0 0 0 0 ' + W + ',0 0 0 0 rgba(255,255,255,0)}}',
+    F + ' .sc-trace{position:absolute!important;inset:-1px!important;pointer-events:none!important;z-index:50!important}',
+    F + ' .sc-trace i{position:absolute!important;display:block!important;background:' + W + '!important;opacity:0}',
+    F + ' .sc-trace .t{top:0;left:0;width:100%;height:1px}',
+    F + ' .sc-trace .r{top:0;right:0;width:1px;height:100%}',
+    F + ' .sc-trace .b{bottom:0;right:0;width:100%;height:1px}',
+    F + ' .sc-trace .l{bottom:0;left:0;width:1px;height:100%}',
+    F + ' .sc-trace.go i{animation:scDonateBloom 2.4s cubic-bezier(.4,0,.2,1) forwards}',
+    '@keyframes scDonateBloom{0%{opacity:0;box-shadow:0 0 0 1px ' + W + ',0 0 16px 5px rgba(255,255,255,.9)}' +
+      '38%{opacity:1;box-shadow:0 0 0 1px ' + W + ',0 0 16px 5px rgba(255,255,255,.9)}' +
+      '100%{opacity:1;box-shadow:0 0 0 0 ' + W + ',0 0 0 0 rgba(255,255,255,0)}}',
     /* comentario abierto: campo compacto de dos líneas con desplazamiento interno, sin relleno extra, para que quepa en la
        banda libre bajo los botones y la tarjeta mantenga su altura (si no cabe, la tarjeta crece lo justo). Los márgenes de
        los botones no cambian al abrirlo: estas reglas pesan más que las antiguas de «comentario abierto» */
@@ -187,7 +188,7 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
       if ((since && performance.now() - since >= 150) || performance.now() - t0 > 8000) { clearInterval(iv); widget.classList.add('sc-dbox-ready'); }
     }, 50);
   }
-  // Al aparecer la tarjeta (sc-dbox-ready en móvil, sc-show en ordenador), el borde se traza en un gesto y brilla una vez
+  // Al aparecer la tarjeta (sc-dbox-ready en móvil, sc-show en ordenador), el borde surge en fundido con brillo y se asienta
   function traceOnReveal(widget, root) {
     if (widget.__scTrace || reduceMotion) return;
     widget.__scTrace = true;
@@ -200,8 +201,7 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
       ov.innerHTML = '<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>';
       form.classList.add('sc-tracing'); form.appendChild(ov);
       void ov.offsetWidth; ov.classList.add('go');
-      setTimeout(function () { form.classList.remove('sc-tracing'); ov.classList.add('glow'); }, 1620);   // tras 4 × 0,4 s
-      setTimeout(function () { ov.remove(); }, 2900);
+      setTimeout(function () { form.classList.remove('sc-tracing'); ov.remove(); }, 2450);   // al asentarse, el borde real toma el relevo
     }
     function arm() { setTimeout(run, mobile ? 260 : 820); }   // tras el fundido de entrada (.24 s móvil, .8 s ordenador)
     if (shown()) return arm();
