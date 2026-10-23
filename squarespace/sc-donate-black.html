@@ -1,8 +1,15 @@
 <!-- sc-donate-black: el formulario de Donate (Donorbox) en negro con líneas blancas finas, como el resto de la web.
      Paso 1: pestañas e importes con contorno (el elegido se rellena de blanco), «Other amount» escribe en blanco,
      botones de pago con contorno y la misma letra que el de Apple Pay. Pasos 2 y 3: campos negros con contorno.
-     Apple Pay es el control oficial de Stripe: solo se le da ancho y se copia su altura para los otros botones.
+     Apple Pay es el control oficial de Stripe (tema negro, solo logotipo, elegido en Donorbox): se le da el mismo ancho
+     que a los otros dos, un contorno blanco de 1 px y los otros dos copian su altura. Separación uniforme de 12 px.
      Se inyecta como <style> al final del shadow root del widget, solo en la página Donate. -->
+<style id="sc-donate-black-light">
+/* el elemento de Apple Pay vive fuera del shadow root (light DOM): mismo ancho que los otros botones, sin el zoom ni el
+   recorte del ajuste antiguo de móvil, iframe en bloque y contorno blanco de 1 px pegado a su caja */
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]{display:block!important;box-sizing:border-box!important;width:100%!important;max-width:270px!important;min-width:0!important;margin:0 auto!important;padding:0!important;outline:1px solid #fff!important;outline-offset:-1px!important;border-radius:0!important}
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] iframe{zoom:1!important;clip-path:none!important;transform:none!important}
+</style>
 <script>
 (function () {
   'use strict';
@@ -60,15 +67,20 @@
     P + '#leave_a_comment{appearance:none!important;-webkit-appearance:none!important;width:12px!important;height:12px!important;border:1px solid ' + W + '!important;border-radius:0!important;background:transparent!important;margin:0 8px 0 0!important}',
     P + '#leave_a_comment:checked{background:' + W + '!important}',
     P + '#comment textarea{background:' + K + '!important;color:' + W + '!important;border:1px solid ' + W + '!important;border-radius:0!important;caret-color:' + W + '!important}',
-    /* paso 1: botones de pago (misma letra que Apple Pay; Apple Pay solo recibe ancho) */
-    P + '#standard_checkout_section{row-gap:10px!important}',
+    /* paso 1: Apple Pay (sección sin alto fijo ni texto «Pay with») y separación uniforme de 12 px entre los tres botones.
+       El iframe de Stripe sobresale 4 px por arriba y por abajo de su sección (márgenes negativos propios), por eso 44 y 16 */
+    P + '#express_checkout_section{height:auto!important;min-height:0!important;margin:44px 0 0!important;padding:0!important;text-align:center!important;overflow:visible!important}',
+    P + '#express_checkout_section>p{display:none!important}',
+    P + '#express_checkout_section slot[name="express_checkout"]{display:block!important;width:100%!important;max-width:270px!important;margin:0 auto!important;transform:none!important}',
+    P + '#express_checkout_section slot[name="express_checkout"]::slotted(.StripeElement){width:100%!important;max-width:270px!important;margin:0 auto!important}',
+    P + '#standard_checkout_section{margin-top:16px!important;margin-bottom:0!important;row-gap:12px!important;gap:12px!important}',
+    F + ' #page_select_amount:has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-donate-no-wallet) #donation_form #page_select_amount #standard_checkout_section{margin-top:40px!important}',
+    /* paso 1: botones de pago (misma letra que Apple Pay) */
     P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay,' + P + '#standard_checkout_section>button[type="submit"]{' + BTN + '}',
     P + '#standard_checkout_section>button[type="submit"] svg{display:none!important}',
     '@media(hover:hover) and (pointer:fine){' + P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay:hover,' + P + '#standard_checkout_section>button[type="submit"]:hover{background:' + W + '!important;color:' + K + '!important}}',
     P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay:active,' + P + '#standard_checkout_section>button[type="submit"]:active{background:' + W + '!important;color:' + K + '!important;transition-duration:.09s!important}',
     P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay:focus-visible,' + P + '#standard_checkout_section>button[type="submit"]:focus-visible{outline:1px solid ' + W + '!important;outline-offset:3px!important}',
-    P + '#express_checkout_section slot[name="express_checkout"]{display:block!important;max-width:270px!important;margin:0 auto!important}',
-    P + '#express_checkout_section slot[name="express_checkout"]::slotted(.StripeElement){max-width:270px!important;margin:0 auto!important}',
     /* pasos 2 y 3: campos, etiquetas, casillas y botón principal */
     D + 'label,' + Y + 'label{' + LABEL + '}',
     D + 'input[type="text"],' + D + 'input[type="email"],' + D + 'input[type="tel"],' + D + 'select,' + D + 'textarea,' + Y + 'input[type="text"],' + Y + 'select{background:' + K + '!important;color:' + W + '!important;border:1px solid ' + W + '!important;border-radius:0!important;box-shadow:none!important;caret-color:' + W + '!important;font-family:' + SERIF + '!important}',
@@ -94,27 +106,32 @@
     var style = root.querySelector('#sc-donate-black');
     if (!style) { style = document.createElement('style'); style.id = 'sc-donate-black'; style.textContent = css; }
     root.appendChild(style);                                 // siempre el último: gana a los bloques anteriores
-    syncPayHeight(widget, root);
+    syncPayHeight(widget);
     return true;
   }
-  // los otros botones copian la altura del botón real de Apple Pay (Stripe decide esa altura)
-  function syncPayHeight(widget, root) {
+  // los otros botones copian la altura del botón real de Apple Pay (Stripe decide esa altura).
+  // El elemento está en el light DOM del widget y su iframe aparece más tarde: se vigila con observadores.
+  function syncPayHeight(widget) {
     if (widget.__scPayH) return;
-    var slot = root.querySelector('#express_checkout_section slot[name="express_checkout"]');
-    if (!slot) return;
     widget.__scPayH = true;
     function apply() {
-      var el = slot.assignedElements ? slot.assignedElements()[0] : null;
-      var h = el ? Math.round(el.getBoundingClientRect().height) : 0;
+      var el = widget.querySelector(':scope > [slot="express_checkout"]');
+      var box = el && (el.querySelector('iframe') || el);
+      var h = box ? Math.round(box.offsetHeight) : 0;           // offsetHeight: sin la escala del widget en móvil
       if (h >= 36 && h <= 64) widget.style.setProperty('--sc-pay-h', h + 'px');
     }
-    apply();
-    slot.addEventListener('slotchange', function () { apply(); setTimeout(apply, 600); });
-    if (window.ResizeObserver) {
-      var ro = new ResizeObserver(apply);
-      slot.addEventListener('slotchange', function () { (slot.assignedElements() || []).forEach(function (e) { ro.observe(e); }); });
-      (slot.assignedElements ? slot.assignedElements() : []).forEach(function (e) { ro.observe(e); });
+    var ro = window.ResizeObserver ? new ResizeObserver(apply) : null;
+    function watch() {
+      var el = widget.querySelector(':scope > [slot="express_checkout"]');
+      if (!el || el.__scWatched) return;
+      el.__scWatched = true;
+      if (ro) { ro.observe(el); var f = el.querySelector('iframe'); if (f) ro.observe(f); }
+      new MutationObserver(function () { apply(); if (ro) { var f = el.querySelector('iframe'); if (f) ro.observe(f); } }).observe(el, { childList: true, subtree: true });
+      apply();
     }
+    watch();
+    new MutationObserver(watch).observe(widget, { childList: true });
+    [500, 1500, 3000, 6000].forEach(function (t) { setTimeout(function () { watch(); apply(); }, t); });
   }
   if (!mount()) {
     var finder = setInterval(function () { if (mount()) clearInterval(finder); }, 25);
