@@ -7,7 +7,11 @@
 <style id="sc-donate-black-light">
 /* el elemento de Apple Pay vive fuera del shadow root (light DOM): mismo ancho que los otros botones, sin el zoom ni el
    recorte del ajuste antiguo de móvil, iframe en bloque y contorno blanco de 1 px pegado a su caja */
-html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]{display:block!important;box-sizing:border-box!important;width:100%!important;max-width:270px!important;min-width:0!important;margin:0 auto!important;padding:0!important;outline:1px solid #fff!important;outline-offset:-1px!important;border-radius:0!important}
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]{display:block!important;box-sizing:border-box!important;width:100%!important;max-width:270px!important;min-width:0!important;margin:0 auto!important;padding:0!important;overflow:hidden!important;outline:1px solid #fff!important;outline-offset:-1px!important;border-radius:0!important}
+/* Donorbox configura el botón rápido de Stripe con una sola fila y columna y «desbordamiento automático»: con Apple Pay y
+   Link disponibles, Stripe pinta Apple Pay y, a su derecha, un botón «···» de unos 56 px más 4 px de hueco. Se da al
+   contenedor interno 60 px de más (330) para que Apple Pay mida 270 y el «···» quede fuera del marco, recortado. */
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] > div{width:330px!important;max-width:none!important}
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] iframe{zoom:1!important;clip-path:none!important;transform:none!important}
 </style>
 <script>
@@ -115,9 +119,8 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
     if (widget.__scPayH) return;
     widget.__scPayH = true;
     function apply() {
-      var el = widget.querySelector(':scope > [slot="express_checkout"]');
-      var box = el && (el.querySelector('iframe') || el);
-      var h = box ? Math.round(box.offsetHeight) : 0;           // offsetHeight: sin la escala del widget en móvil
+      var el = widget.querySelector(':scope > [slot="express_checkout"]');   // su caja es la del marco blanco
+      var h = el ? Math.round(el.offsetHeight) : 0;              // offsetHeight: sin la escala del widget en móvil
       if (h >= 36 && h <= 64) widget.style.setProperty('--sc-pay-h', h + 'px');
     }
     var ro = window.ResizeObserver ? new ResizeObserver(apply) : null;
