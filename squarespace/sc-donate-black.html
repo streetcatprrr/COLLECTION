@@ -7,7 +7,9 @@
 <style id="sc-donate-black-light">
 /* el elemento de Apple Pay vive fuera del shadow root (light DOM): mismo ancho que los otros botones, sin el zoom ni el
    recorte del ajuste antiguo de móvil, iframe en bloque y contorno blanco de 1 px pegado a su caja */
-html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]{display:block!important;box-sizing:border-box!important;width:100%!important;max-width:270px!important;min-width:0!important;margin:0 auto!important;padding:0!important;overflow:hidden!important;outline:1px solid #fff!important;outline-offset:-1px!important;border-radius:0!important}
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]{display:block!important;position:relative!important;box-sizing:border-box!important;width:100%!important;max-width:270px!important;min-width:0!important;margin:0 auto!important;padding:0!important;overflow:hidden!important;border-radius:0!important}
+/* marco de 1 px en una capa por encima del iframe (el iframe tapa el outline del contenedor) */
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]::after{content:""!important;position:absolute!important;inset:0!important;border:1px solid #fff!important;pointer-events:none!important;z-index:5!important;box-sizing:border-box!important}
 /* Donorbox configura el botón rápido de Stripe con una sola fila y columna y «desbordamiento automático»: con Apple Pay y
    Link disponibles, Stripe pinta Apple Pay (≈78 % del ancho) y, a su derecha, un hueco y un botón «···» (≈22 %, proporcional).
    El contenedor interno mide 350 px para que Apple Pay salga de ≈272 px y el marco de 270 recorte el hueco y el «···».
