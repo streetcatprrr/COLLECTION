@@ -220,10 +220,21 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
       var t = e.target && e.target.closest ? e.target.closest('#standard_checkout_section .sc-crypto-pay, #standard_checkout_section > button[type="submit"]') : null;
       if (!t) return;
       if (t.__scGo) { t.__scGo = false; return; }                                           // segundo pulso: pasa
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;      // pestaña nueva, etc.
       if (!amountChosen()) return;                                                        // sin importe, Donorbox avisa como siempre
+      var isLink = t.matches('.sc-crypto-pay');
+      var href = isLink ? (t.getAttribute('href') || '/crypto') : null;
       e.preventDefault(); e.stopImmediatePropagation();
       ringTrace(root);
-      setTimeout(function () { t.__scGo = true; t.click(); }, 620);
+      setTimeout(function () {
+        if (isLink) {                                                                     // misma salida que tiene el enlace: fundido y navegación
+          document.body.classList.add('sc-story-leaving');
+          setTimeout(function () { location.assign(href); }, 580);
+        } else {                                                                          // paso 2 de Donorbox (el botón puede haberse vuelto a crear)
+          var b = root.querySelector('#standard_checkout_section > button[type="submit"]') || t;
+          b.__scGo = true; b.click();
+        }
+      }, 620);
     }, true);
   }
   // los otros botones copian la altura del botón real de Apple Pay (Stripe decide esa altura).
