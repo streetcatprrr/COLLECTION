@@ -121,20 +121,10 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     ':host(.sc-wallet-expected:not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section.hidden{display:block!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section{position:relative!important;min-height:40px!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section::before{content:""!important;position:absolute!important;left:50%!important;top:-4px!important;width:min(100%,270px)!important;height:var(--sc-pay-h,48px)!important;transform:translateX(-50%)!important;border:1px solid ' + W + '!important;box-sizing:border-box!important;pointer-events:none!important}',
-    /* borde al aparecer la tarjeta: surge en fundido ya con brillo (línea de 3 px y halo de 16 px) y se asienta despacio
-       hasta quedarse en la línea fina de 1 px. Un solo movimiento de 2,4 s, al ritmo pausado del resto de la web */
-    F + '{position:relative!important}',
-    ':host #donation_form.sc-tracing{border-color:transparent!important}',
-    F + ' .sc-trace{position:absolute!important;inset:-1px!important;pointer-events:none!important;z-index:50!important}',
-    F + ' .sc-trace i{position:absolute!important;display:block!important;background:' + W + '!important;opacity:0}',
-    F + ' .sc-trace .t{top:0;left:0;width:100%;height:1px}',
-    F + ' .sc-trace .r{top:0;right:0;width:1px;height:100%}',
-    F + ' .sc-trace .b{bottom:0;right:0;width:100%;height:1px}',
-    F + ' .sc-trace .l{bottom:0;left:0;width:1px;height:100%}',
-    F + ' .sc-trace.go i{animation:scDonateBloom 2.4s cubic-bezier(.4,0,.2,1) forwards}',
-    '@keyframes scDonateBloom{0%{opacity:0;box-shadow:0 0 0 1px ' + W + ',0 0 16px 5px rgba(255,255,255,.9)}' +
-      '38%{opacity:1;box-shadow:0 0 0 1px ' + W + ',0 0 16px 5px rgba(255,255,255,.9)}' +
-      '100%{opacity:1;box-shadow:0 0 0 0 ' + W + ',0 0 0 0 rgba(255,255,255,0)}}',
+    /* borde al aparecer la tarjeta: la tarjeta entra sin borde y, cuando el contenido ya está, el borde fino se funde
+       en un segundo (sin brillo ni grosor): un pequeño cierre */
+    ':host #donation_form.sc-tracing{border-color:transparent!important;transition:border-color 1s ease!important}',
+    ':host #donation_form.sc-tracing.sc-traced{border-color:' + W + '!important}',
     /* comentario abierto: campo compacto de dos líneas con desplazamiento interno, sin relleno extra, para que quepa en la
        banda libre bajo los botones y la tarjeta mantenga su altura (si no cabe, la tarjeta crece lo justo). Los márgenes de
        los botones no cambian al abrirlo: estas reglas pesan más que las antiguas de «comentario abierto» */
@@ -196,14 +186,15 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     function shown() { return mobile ? widget.classList.contains('sc-dbox-ready') : widget.classList.contains('sc-show'); }
     function run() {
       var form = root.querySelector('#donation_form');
-      if (!form || form.querySelector('.sc-trace')) return;
-      var ov = document.createElement('span'); ov.className = 'sc-trace'; ov.setAttribute('aria-hidden', 'true');
-      ov.innerHTML = '<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>';
-      form.classList.add('sc-tracing'); form.appendChild(ov);
-      void ov.offsetWidth; ov.classList.add('go');
-      setTimeout(function () { form.classList.remove('sc-tracing'); ov.remove(); }, 2450);   // al asentarse, el borde real toma el relevo
+      if (!form || form.__scTraced) return;
+      form.__scTraced = true;
+      form.classList.add('sc-traced');                                     // el borde se funde (1 s)
+      setTimeout(function () { form.classList.remove('sc-tracing', 'sc-traced'); }, 1100);
     }
-    function arm() { setTimeout(run, mobile ? 260 : 820); }   // tras el fundido de entrada (.24 s móvil, .8 s ordenador)
+    function hideBorder() { var form = root.querySelector('#donation_form'); if (form && !form.__scTraced) form.classList.add('sc-tracing'); }
+    hideBorder();                                                            // sin borde desde el principio
+    new MutationObserver(hideBorder).observe(root, { childList: true });     // por si el formulario se vuelve a crear
+    function arm() { setTimeout(run, mobile ? 500 : 1000); }                 // cuando el contenido ya está (fundido de .24 s / .8 s)
     if (shown()) return arm();
     new MutationObserver(function (ms, mo) { if (shown()) { mo.disconnect(); arm(); } }).observe(widget, { attributes: true, attributeFilter: ['class'] });
   }
