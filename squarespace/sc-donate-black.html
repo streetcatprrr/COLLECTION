@@ -75,13 +75,13 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > 
     P + '#leave_a_comment{appearance:none!important;-webkit-appearance:none!important;width:12px!important;height:12px!important;border:1px solid ' + W + '!important;border-radius:0!important;background:transparent!important;margin:0 8px 0 0!important}',
     P + '#leave_a_comment:checked{background:' + W + '!important}',
     P + '#comment textarea{background:' + K + '!important;color:' + W + '!important;border:1px solid ' + W + '!important;border-radius:0!important;caret-color:' + W + '!important}',
-    /* paso 1: Apple Pay (sección sin alto fijo ni texto «Pay with») y separación uniforme de 12 px entre los tres botones.
-       El iframe de Stripe sobresale 4 px por arriba y por abajo de su sección (márgenes negativos propios), por eso 44 y 16 */
+    /* paso 1: Apple Pay (sección sin alto fijo ni texto «Pay with») y separación uniforme de 18 px entre los tres botones.
+       El iframe de Stripe sobresale 4 px por arriba y por abajo de su sección (márgenes negativos propios), por eso 44 y 22 */
     P + '#express_checkout_section{height:auto!important;min-height:0!important;margin:44px 0 0!important;padding:0!important;text-align:center!important;overflow:visible!important}',
     P + '#express_checkout_section>p{display:none!important}',
     P + '#express_checkout_section slot[name="express_checkout"]{display:block!important;width:100%!important;max-width:270px!important;margin:0 auto!important;transform:none!important}',
     P + '#express_checkout_section slot[name="express_checkout"]::slotted(.StripeElement){width:100%!important;max-width:270px!important;margin:0 auto!important}',
-    P + '#standard_checkout_section{margin-top:16px!important;margin-bottom:0!important;row-gap:12px!important;gap:12px!important}',
+    P + '#standard_checkout_section{margin-top:22px!important;margin-bottom:0!important;row-gap:18px!important;gap:18px!important}',
     F + ' #page_select_amount:has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-donate-no-wallet) #donation_form #page_select_amount #standard_checkout_section{margin-top:40px!important}',
     /* paso 1: botones de pago (misma letra que Apple Pay) */
     P + '#standard_checkout_section .sc-crypto-next.sc-crypto-pay,' + P + '#standard_checkout_section>button[type="submit"]{' + BTN + '}',
