@@ -121,18 +121,31 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     ':host(.sc-wallet-expected:not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section.hidden{display:block!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section{position:relative!important;min-height:40px!important}',
     ':host(.sc-wallet-expected:not(.sc-pay-live):not(.sc-pay-gaveup)) #donation_form #page_select_amount #express_checkout_section::before{content:""!important;position:absolute!important;left:50%!important;top:-4px!important;width:min(100%,270px)!important;height:var(--sc-pay-h,48px)!important;transform:translateX(-50%)!important;border:1px solid ' + W + '!important;box-sizing:border-box!important;pointer-events:none!important}',
-    /* trazo blanco al aparecer la tarjeta: el borde se dibuja en un solo gesto (arriba → derecha → abajo → izquierda) */
+    /* trazo blanco al aparecer la tarjeta: el borde se dibuja en un solo gesto (arriba → derecha → abajo → izquierda,
+       4 × 0,4 s) y, al cerrarse, la línea engorda a 3 px con un halo ancho y vuelve a 1 px mientras el halo se apaga (1,2 s) */
     F + '{position:relative!important}',
     ':host #donation_form.sc-tracing{border-color:transparent!important}',
-    F + ' .sc-trace{position:absolute!important;inset:-1px!important;pointer-events:none!important;z-index:50!important}',
-    F + ' .sc-trace i{position:absolute!important;display:block!important;background:' + W + '!important;transition:transform .15s linear!important}',
+    F + ' .sc-trace{--sc-td:.4s;position:absolute!important;inset:-1px!important;pointer-events:none!important;z-index:50!important}',
+    F + ' .sc-trace i{position:absolute!important;display:block!important;background:' + W + '!important;transition:transform var(--sc-td) linear!important}',
     F + ' .sc-trace .t{top:0;left:0;width:100%;height:1px;transform-origin:left center;transform:scaleX(0)}',
-    F + ' .sc-trace .r{top:0;right:0;width:1px;height:100%;transform-origin:center top;transform:scaleY(0);transition-delay:.15s!important}',
-    F + ' .sc-trace .b{bottom:0;right:0;width:100%;height:1px;transform-origin:right center;transform:scaleX(0);transition-delay:.3s!important}',
-    F + ' .sc-trace .l{bottom:0;left:0;width:1px;height:100%;transform-origin:center bottom;transform:scaleY(0);transition-delay:.45s!important}',
+    F + ' .sc-trace .r{top:0;right:0;width:1px;height:100%;transform-origin:center top;transform:scaleY(0);transition-delay:var(--sc-td)!important}',
+    F + ' .sc-trace .b{bottom:0;right:0;width:100%;height:1px;transform-origin:right center;transform:scaleX(0);transition-delay:calc(var(--sc-td) * 2)!important}',
+    F + ' .sc-trace .l{bottom:0;left:0;width:1px;height:100%;transform-origin:center bottom;transform:scaleY(0);transition-delay:calc(var(--sc-td) * 3)!important}',
     F + ' .sc-trace.go i{transform:none!important}',
-    F + ' .sc-trace.glow{animation:scDonateGlow .8s ease-out forwards}',
-    '@keyframes scDonateGlow{0%{filter:drop-shadow(0 0 6px rgba(255,255,255,.95))}100%{filter:drop-shadow(0 0 0 transparent)}}',
+    F + ' .sc-trace.glow i{animation:scDonateGlow 1.2s cubic-bezier(.2,.6,.3,1) forwards}',
+    '@keyframes scDonateGlow{0%{box-shadow:0 0 0 0 ' + W + ',0 0 0 0 rgba(255,255,255,0)}14%{box-shadow:0 0 0 1px ' + W + ',0 0 14px 4px rgba(255,255,255,.85)}100%{box-shadow:0 0 0 0 ' + W + ',0 0 0 0 rgba(255,255,255,0)}}',
+    /* comentario abierto: campo compacto de dos líneas con desplazamiento interno, sin relleno extra, para que quepa en la
+       banda libre bajo los botones y la tarjeta mantenga su altura (si no cabe, la tarjeta crece lo justo). Los márgenes de
+       los botones no cambian al abrirlo: estas reglas pesan más que las antiguas de «comentario abierto» */
+    P + '#comment .switch-content{margin:10px 0 0!important;padding:0!important}',
+    P + '#comment .switch-content p{margin:0!important}',
+    P + '#comment .switch-content label{display:block!important;margin:0 0 6px!important}',
+    P + '#comment textarea{box-sizing:border-box!important;width:100%!important;height:64px!important;min-height:64px!important;max-height:64px!important;resize:none!important;padding:8px 10px!important;margin:0!important;font-size:16px!important;line-height:1.3!important;overflow:auto!important}',
+    '@media(max-width:767px){:host #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked){padding-bottom:6px!important}}',
+    ':host(:not(.sc-none)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #express_checkout_section{margin:44px 0 0!important}',
+    ':host(:not(.sc-none)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section{margin-top:22px!important;margin-bottom:0!important}',
+    ':host(:not(.sc-wallet-expected)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked):has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-pay-gaveup) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked):has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-donate-no-wallet) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section{margin-top:40px!important}',
+    ':host(:not(.sc-none)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section .sc-crypto-next.sc-crypto-pay{margin:0 auto!important}',
     /* movimiento reducido */
     '@media(prefers-reduced-motion:reduce){' + F + ' button,' + F + ' .sc-crypto-pay{transition:none!important}' + F + ' .sc-trace{display:none!important}:host #donation_form.sc-tracing{border-color:' + W + '!important}}'
   ].join('');
@@ -187,8 +200,8 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
       ov.innerHTML = '<i class="t"></i><i class="r"></i><i class="b"></i><i class="l"></i>';
       form.classList.add('sc-tracing'); form.appendChild(ov);
       void ov.offsetWidth; ov.classList.add('go');
-      setTimeout(function () { form.classList.remove('sc-tracing'); ov.classList.add('glow'); }, 620);
-      setTimeout(function () { ov.remove(); }, 1500);
+      setTimeout(function () { form.classList.remove('sc-tracing'); ov.classList.add('glow'); }, 1620);   // tras 4 × 0,4 s
+      setTimeout(function () { ov.remove(); }, 2900);
     }
     function arm() { setTimeout(run, mobile ? 260 : 820); }   // tras el fundido de entrada (.24 s móvil, .8 s ordenador)
     if (shown()) return arm();
