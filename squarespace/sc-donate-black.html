@@ -10,18 +10,23 @@
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]{display:block!important;position:relative!important;box-sizing:border-box!important;width:100%!important;max-width:270px!important;min-width:0!important;margin:0 auto!important;padding:0!important;overflow:hidden!important;border-radius:0!important}
 /* marco de 1 px en una capa por encima del iframe (el iframe tapa el outline del contenedor) */
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"]::after{content:""!important;position:absolute!important;inset:0!important;border:1px solid #fff!important;pointer-events:none!important;z-index:5!important;box-sizing:border-box!important}
-/* Donorbox configura el botón rápido de Stripe con una sola fila y columna y «desbordamiento automático»: con Apple Pay y
-   Link disponibles, Stripe pinta Apple Pay (≈78 % del ancho) y, a su derecha, un hueco y un botón «···» (≈22 %, proporcional).
-   El contenedor interno mide 350 px para que Apple Pay salga de ≈272 px y el marco de 270 recorte el hueco y el «···».
+/* Donorbox configura el botón rápido de Stripe con una sola fila y columna y «desbordamiento automático»: con más de un
+   método disponible (Apple Pay + Link), Stripe pinta Apple Pay (≈78 % del ancho) y, a su derecha, un hueco y un botón «···»
+   (≈22 %, proporcional). En ese caso (clase sc-pay-multi, leída del mensaje «ready» de Stripe) el contenedor interno mide
+   350 px para que Apple Pay salga de ≈272 px y el marco de 270 recorte el hueco y el «···»; con un solo método, 270.
    Donorbox entrega el botón en tema blanco (con el color del botón en negro o en blanco), así que se invierte:
    negro con el logotipo en blanco, igual que Crypto y Other. */
-html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] > div{width:350px!important;max-width:none!important}
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] > div{width:270px!important;max-width:none!important}
+html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc-pay-multi > [slot="express_checkout"] > div{width:350px!important}
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget > [slot="express_checkout"] iframe{zoom:1!important;clip-path:none!important;transform:none!important;filter:invert(1)!important;-webkit-filter:invert(1)!important}
 /* mientras Stripe carga el botón, su elemento es invisible dentro del marco reservado; al medir, aparece en fundido */
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc-wallet-expected:not(.sc-pay-live) > [slot="express_checkout"]{opacity:0!important}
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc-pay-live > [slot="express_checkout"]{opacity:1!important;transition:opacity .3s ease!important}
-/* móvil: alto mínimo del widget en px (ver fitMobile en el guion: --sc-svh y --sc-k) en lugar de svh */
-@media (max-width:767px){html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget{min-height:clamp(calc(530px * var(--sc-k,1)),calc(145px * var(--sc-k,1) + 52 * var(--sc-svh,1svh)),calc(640px * var(--sc-k,1)))!important}}
+/* móvil: el diseño anterior reducía el widget con zoom .8. En Safari antiguos el zoom no reduce las unidades de pantalla
+   (vw, svh) ni las mediciones del código, y la tarjeta salía un 25 % más grande. Se sustituye por transform: scale(.8),
+   que reduce todo por igual en todos los navegadores. La caja de maquetación sigue midiendo 110vw y se centra con
+   márgenes negativos; el guion (fitMobile) descuenta el 20 % de alto que la escala deja vacío debajo. */
+@media (max-width:767px){html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget{zoom:1!important;width:110vw!important;max-width:none!important;min-width:0!important;margin:6px calc(50% - 55vw) 0!important;transform:scale(.8)!important;transform-origin:50% 0!important}}
 /* el fundido de entrada de la tarjeta en ordenador pasa de 1,5 s a 0,8 s (en móvil ya era de 0,24 s) */
 html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc-show{animation-duration:.8s!important}
 </style>
@@ -150,14 +155,6 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     ':host(:not(.sc-none)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section{margin-top:22px!important;margin-bottom:0!important}',
     ':host(:not(.sc-wallet-expected)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked):has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-pay-gaveup) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked):has(#express_checkout_section.hidden) #standard_checkout_section,:host(.sc-donate-no-wallet) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section{margin-top:40px!important}',
     ':host(:not(.sc-none)) #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked) #standard_checkout_section .sc-crypto-next.sc-crypto-pay{margin:0 auto!important}',
-    /* móvil: las alturas de la tarjeta se expresaban en svh dentro de un elemento con zoom .8; en Safari antiguos las
-       unidades de viewport no se reducen con el zoom (la tarjeta salía un 25 % más grande y cortada). El guion mide el
-       zoom real y pasa el alto del viewport en px (--sc-svh) con el factor --sc-k: así cuadra en todos */
-    '@media(max-width:767px){' +
-      ':host #donation_form #page_select_amount#page_select_amount{height:clamp(calc(580px * var(--sc-k,1)),calc(230px * var(--sc-k,1) + 50 * var(--sc-svh,1svh)),calc(680px * var(--sc-k,1)))!important;min-height:clamp(calc(580px * var(--sc-k,1)),calc(230px * var(--sc-k,1) + 50 * var(--sc-svh,1svh)),calc(680px * var(--sc-k,1)))!important}' +
-      ':host(.sc-donate-no-wallet) #donation_form #page_select_amount#page_select_amount{height:clamp(calc(480px * var(--sc-k,1)),calc(95px * var(--sc-k,1) + 52 * var(--sc-svh,1svh)),calc(590px * var(--sc-k,1)))!important;min-height:clamp(calc(480px * var(--sc-k,1)),calc(95px * var(--sc-k,1) + 52 * var(--sc-svh,1svh)),calc(590px * var(--sc-k,1)))!important}' +
-      ':host #donation_form #page_select_amount#page_select_amount:has(#leave_a_comment:checked){height:auto!important}' +
-    '}',
     /* movimiento reducido */
     '@media(prefers-reduced-motion:reduce){' + F + ' button,' + F + ' .sc-crypto-pay{transition:none!important}' + F + ' .sc-ring{display:none!important}}'
   ].join('');
@@ -165,6 +162,25 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
   var walletExpected = false;
   try { walletExpected = (typeof ApplePaySession !== 'undefined' && ApplePaySession.canMakePayments()) || /Android/i.test(navigator.userAgent); } catch (e) {}
   var reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // ¿Cuántos métodos rápidos ofrece Stripe? Con más de uno (Apple Pay + Link, por ejemplo) añade un botón «···» junto a
+  // Apple Pay y el contenedor interno debe medir 350 px para que Apple Pay salga de 270 y el «···» quede fuera; con uno
+  // solo, el contenedor mide 270 (si no, el logotipo saldría descentrado). Se lee del mensaje «ready» que el iframe de
+  // Stripe manda a la página (availablePaymentMethods). Mientras no se sabe, 270.
+  window.__scStripeMethods = null;
+  window.addEventListener('message', function (e) {
+    try {
+      if (!/^https:\/\/([a-z0-9-]+\.)?stripe\.com$/.test(e.origin)) return;
+      var raw = typeof e.data === 'string' ? e.data : JSON.stringify(e.data);
+      if (!raw || raw.indexOf('availablePaymentMethods') < 0) return;
+      var m = raw.match(/"availablePaymentMethods"\s*:\s*(\{[^}]*\})/);
+      if (!m) return;
+      var methods = JSON.parse(m[1]), n = 0, k;
+      for (k in methods) if (methods[k] === true) n++;
+      window.__scStripeMethods = methods;
+      var widget = document.querySelector('#page dbox-widget');
+      if (widget) widget.classList.toggle('sc-pay-multi', n > 1);
+    } catch (x) {}
+  });
   function mount() {
     var widget = document.querySelector('#page dbox-widget');
     var root = widget && widget.shadowRoot;
@@ -179,30 +195,18 @@ html:not(#sc-none) body#collection-6934b65250af903b74bf9bdb #page dbox-widget.sc
     wirePayTrace(root);
     return true;
   }
-  // Móvil: el widget lleva zoom .8 y su ancho estaba en vw (110vw) y sus alturas en svh. En Safari antiguos esas unidades
-  // no se reducen con el zoom y la tarjeta salía un 25 % más grande. Se mide si el zoom reduce de verdad (sonda de 200 px)
-  // y se fijan ancho y alto del viewport en px, que el zoom sí reduce en todos los navegadores.
+  // Móvil: el widget se reduce con transform: scale(.8) (ver el estilo de arriba). La escala no reduce la caja de
+  // maquetación, así que el 20 % de alto que queda vacío debajo se descuenta con un margen negativo.
   function fitMobile(widget) {
     function apply() {
-      if (!window.matchMedia('(max-width: 767px)').matches) { widget.style.removeProperty('width'); widget.style.removeProperty('--sc-k'); widget.style.removeProperty('--sc-svh'); return; }
-      if (widget.__scZoom === undefined) {
-        var prev = widget.style.getPropertyValue('width'), prevP = widget.style.getPropertyPriority('width');
-        widget.style.setProperty('width', '200px', 'important');
-        var z = widget.getBoundingClientRect().width / 200;                   // .8 si el zoom reduce; 1 si no
-        if (prev) widget.style.setProperty('width', prev, prevP); else widget.style.removeProperty('width');
-        widget.__scZoom = (z > .7 && z < .9) ? .8 : 1;
-      }
-      var k = widget.__scZoom === .8 ? 1 : .8;                                // factor para alturas en px
-      widget.style.setProperty('width', Math.round(window.innerWidth * (widget.__scZoom === .8 ? 1.1 : .88)) + 'px', 'important');
-      widget.style.setProperty('--sc-k', String(k));
-      widget.style.setProperty('--sc-svh', (window.innerHeight / 100 * k).toFixed(2) + 'px');
+      if (!window.matchMedia('(max-width: 767px)').matches) { widget.style.removeProperty('margin-bottom'); return; }
+      widget.style.setProperty('margin-bottom', (-Math.round(widget.offsetHeight * 0.2)) + 'px', 'important');
     }
     apply();
     if (!widget.__scFit) {
       widget.__scFit = true;
+      if (window.ResizeObserver) new ResizeObserver(apply).observe(widget);
       window.addEventListener('orientationchange', function () { setTimeout(apply, 300); });
-      var w0 = window.innerWidth;
-      window.addEventListener('resize', function () { if (Math.abs(window.innerWidth - w0) > 40) { w0 = window.innerWidth; apply(); } });   // solo cambios de ancho (no la barra de Safari)
     }
   }
   // La tarjeta se muestra en cuanto el formulario está pintado y quieto (150 ms), sin esperar al botón de Apple Pay,
