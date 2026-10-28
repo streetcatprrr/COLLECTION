@@ -30,7 +30,7 @@
   function finish() {   // pase lo que pase, el logotipo acaba blanco y la capa de trazo desaparece
     if (finished) return; finished = true;
     root.classList.add('sc-lt-fill');
-    setTimeout(function () { root.classList.remove('sc-lt', 'sc-lt-fill'); if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 800);
+    setTimeout(function () { if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 800);   // las clases se quedan: el logo sigue blanco y visible
   }
   function start(a) {
     if (started) return; started = true;
@@ -43,7 +43,7 @@
     setTimeout(finish, 1450);   // tras el trazo (0,9 s + 10 × 55 ms), las letras se llenan
   }
   function go() {
-    var a = document.querySelector('#header .header-title-logo.sc-svg-on a');
+    var a = document.querySelector('#header .header-display-mobile .header-title-logo.sc-svg-on a');   // la cabecera móvil (la de ordenador está oculta, pero existe)
     if (!a) return false;
     // el trazo arranca 0,9 s antes de que empiece la luz del gato (que ahora espera 1,05 s)
     var cat = document.querySelector('#block-yui_3_17_2_1_1764458656854_2198 img');
