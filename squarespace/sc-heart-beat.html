@@ -1,0 +1,129 @@
+<!-- sc-heart-beat: el corazón de Donate (móvil) late con el mismo doble golpe de siempre, pero cada 4 s y con un destello blanco
+     que se apaga despacio (la misma curva que el marco del QR de cripto). Mientras se desplaza la página no late; al parar,
+     vuelve en ~1 s. Solo sustituye la animación continua scdn-rest cuando este guion arranca: si fallara, sigue la de siempre.
+     El primer latido de cada página sigue trayendo las ondas (sc-mw-ripples). -->
+<style>
+html.sc-hb a.scdn-fab svg{animation:none!important}
+</style>
+<script>
+(function () {
+  'use strict';
+  if (window.__scHeartBeat2026) return;
+  window.__scHeartBeat2026 = true;
+  if (!window.matchMedia || !Element.prototype.animate) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var root = document.documentElement;
+  var mobile = matchMedia('(max-width: 767px)');
+  var PERIOD = 4000;
+  // el golpe: el mismo de antes (×1,05 a 150 ms, ×1,025 a 450 ms; 630 ms en total)
+  var BEAT = [
+    { transform: 'scale(1)', easing: 'ease-in-out' },
+    { transform: 'scale(1.05)', offset: 0.15 / 0.63, easing: 'ease-in-out' },
+    { transform: 'scale(1)', offset: 0.3 / 0.63, easing: 'ease-in-out' },
+    { transform: 'scale(1.025)', offset: 0.45 / 0.63, easing: 'ease-in-out' },
+    { transform: 'scale(1)' }
+  ];
+  // el destello: sube con el primer golpe y se apaga en una sola curva
+  var G0 = 'drop-shadow(0 0 0 rgba(255,255,255,0)) drop-shadow(0 0 0 rgba(255,255,255,0))';
+  var G1 = 'drop-shadow(0 0 1.5px rgba(255,255,255,.95)) drop-shadow(0 0 7px rgba(255,255,255,.7))';
+  var GLOW = [
+    { filter: G0, easing: 'ease-out' },
+    { filter: G1, offset: 0.15 / 1.4, easing: 'cubic-bezier(.3,.1,.3,1)' },
+    { filter: G0 }
+  ];
+
+  function attach(heart) {
+    var svg = heart.querySelector('svg');
+    if (!svg || svg.__scBeat) return;
+    svg.__scBeat = true;
+    root.classList.add('sc-hb');
+    var timer = 0, idle = 0, moving = false, started = false;
+
+    // las ondas de la entrada esperan «la siguiente vuelta» de la animación de antes: se la anunciamos en cada golpe
+    function announce() {
+      var ev;
+      try { ev = new AnimationEvent('animationiteration', { animationName: 'scdn-rest' }); }
+      catch (e) {
+        ev = document.createEvent('Event');
+        ev.initEvent('animationiteration', false, false);
+        try { Object.defineProperty(ev, 'animationName', { value: 'scdn-rest' }); } catch (e2) {}
+      }
+      svg.dispatchEvent(ev);
+    }
+    function beat() {
+      svg.animate(BEAT, { duration: 630 });
+      svg.animate(GLOW, { duration: 1400 });
+      announce();
+    }
+    function next(ms) {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (!heart.isConnected) return;
+        if (moving || document.hidden) return;   // se reanuda al parar de desplazar o al volver a la pestaña
+        if (mobile.matches) beat();
+        next(PERIOD);
+      }, ms);
+    }
+    function onMove() {
+      moving = true;
+      clearTimeout(timer); clearTimeout(idle);
+      idle = setTimeout(function () { moving = false; if (started) next(900); }, 250);
+    }
+    window.addEventListener('scroll', onMove, { passive: true });
+    window.addEventListener('touchmove', onMove, { passive: true });
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && started && !moving) next(900);
+    });
+
+    function start() {
+      if (started) return;
+      started = true;
+      if (!moving) next(250);
+    }
+    // el primer latido, con el corazón ya dibujado y la página a la vista (las mismas esperas que las ondas)
+    function covered() {
+      return root.classList.contains('sc-route2-arriving') || root.classList.contains('sc-route3-wait');
+    }
+    function afterReveal() {
+      if (!covered()) return start();
+      var mo = new MutationObserver(function () { if (covered()) return; mo.disconnect(); start(); });
+      mo.observe(root, { attributes: true, attributeFilter: ['class'] });
+      setTimeout(function () { mo.disconnect(); start(); }, 8000);
+    }
+    var outlined = false;
+    function afterOutline() {
+      if (outlined) return;
+      outlined = true;
+      var drawsNow = heart.classList.contains('js') && !root.classList.contains('sc-shell-seen');
+      setTimeout(afterReveal, drawsNow ? 1200 : 0);
+    }
+    if (heart.classList.contains('in') || !heart.classList.contains('js')) afterOutline();
+    else {
+      var shown = new MutationObserver(function () {
+        if (!heart.classList.contains('in')) return;
+        shown.disconnect();
+        afterOutline();
+      });
+      shown.observe(heart, { attributes: true, attributeFilter: ['class'] });
+      setTimeout(function () { shown.disconnect(); afterOutline(); }, 8500);
+    }
+  }
+
+  function init() {
+    var heart = document.querySelector('a.scdn-fab[href]');
+    if (heart) return attach(heart);
+    // en Donate el corazón lo crea otro guion del pie de página, un poco después
+    var mo = new MutationObserver(function () {
+      var h = document.querySelector('a.scdn-fab[href]');
+      if (!h) return;
+      mo.disconnect();
+      attach(h);
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { mo.disconnect(); }, 10000);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+  else init();
+})();
+</script>
+<!-- /sc-heart-beat -->
