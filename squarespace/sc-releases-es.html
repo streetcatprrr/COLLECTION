@@ -1,0 +1,61 @@
+<!-- sc-releases-es: in Spanish, the "Releases" menu link (to streetcats.xyz) reads «Lanzamientos». Weglot's
+     automatic translation turned it into «Comunicados de prensa», so the label is kept out of Weglot
+     (data-wg-notranslate) and written here for each language. If this script fails, the menu keeps the
+     plain "Releases" link. -->
+<script>
+(function () {
+  'use strict';
+  if (window.__scReleasesEs) return;
+  window.__scReleasesEs = true;
+  var LABEL = { en: 'Releases', es: 'Lanzamientos' };
+
+  function current() {
+    try {
+      if (window.Weglot && typeof Weglot.getCurrentLang === 'function') return Weglot.getCurrentLang() || 'en';
+    } catch (e) {}
+    return 'en';
+  }
+  function releaseLinks() {
+    var links = document.querySelectorAll('.header-nav-item a[href], .header-menu-nav-item a[href]'), out = [];
+    for (var i = 0; i < links.length; i++) {
+      try { if (new URL(links[i].href).hostname.replace(/^www\./, '') === 'streetcats.xyz') out.push(links[i]); } catch (e) {}
+    }
+    return out;
+  }
+  function apply(lang) {
+    var text = LABEL[lang || current()] || LABEL.en;
+    var links = releaseLinks();
+    for (var i = 0; i < links.length; i++) {
+      var a = links[i], span = a.querySelector('span[data-sc-releases]');
+      if (!span) {
+        // swap the link's own words for a span Weglot leaves alone; any other children stay as they are
+        for (var n = a.firstChild; n; ) {
+          var next = n.nextSibling;
+          if (n.nodeType === 3 && n.nodeValue.trim()) a.removeChild(n);
+          n = next;
+        }
+        span = document.createElement('span');
+        span.setAttribute('data-sc-releases', '');
+        span.setAttribute('data-wg-notranslate', '');
+        a.insertBefore(span, a.firstChild);
+      }
+      if (span.textContent !== text) span.textContent = text;
+    }
+  }
+  var hooked = false;
+  function hook() {
+    if (hooked || !window.Weglot || typeof Weglot.on !== 'function') return;
+    hooked = true;
+    try { Weglot.on('languageChanged', function (lang) { apply(lang); }); } catch (e) {}
+    try { Weglot.on('initialized', function () { apply(); }); } catch (e) {}
+  }
+  function run() { hook(); apply(); }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run, { once: true });
+  else run();
+  window.addEventListener('load', run);
+  setTimeout(run, 1200);
+  setTimeout(run, 3000);
+})();
+</script>
+<!-- /sc-releases-es -->
