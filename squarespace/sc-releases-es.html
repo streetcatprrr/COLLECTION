@@ -1,4 +1,4 @@
-<!-- sc-releases-es: in Spanish, the "Releases" menu link (to streetcats.xyz) reads «Lanzamientos». Weglot's
+<!-- sc-releases-es: in Spanish, the "Releases" menu link (to streetcats.xyz) reads «Lanzamientos» and carries ?lang=es. Weglot's
      automatic translation turned it into «Comunicados de prensa», so the label is kept out of Weglot
      (data-wg-notranslate) and written here for each language. If this script fails, the menu keeps the
      plain "Releases" link. -->
@@ -40,6 +40,13 @@
         a.insertBefore(span, a.firstChild);
       }
       if (span.textContent !== text) span.textContent = text;
+      // streetcats.xyz opens in the same language it is read here: Spanish gets ?lang=es, English a clean address
+      try {
+        var u = new URL(a.href);
+        if ((lang || current()) === 'es') u.searchParams.set('lang', 'es'); else u.searchParams.delete('lang');
+        var href = u.toString().replace(/\/\?$/, '/');
+        if (a.getAttribute('href') !== href) a.setAttribute('href', href);
+      } catch (e) {}
     }
   }
   var hooked = false;
