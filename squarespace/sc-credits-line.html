@@ -1,0 +1,37 @@
+<!-- sc-credits-line: en móvil, «Credits» depende de una línea invisible a 70 px del borde inferior de la pantalla: por debajo de ella está apagado y se enciende (en 50 px) al subir por encima. Sin temporizadores, como las tres rayas del menú. En ordenador no cambia nada. -->
+<style>
+@media (max-width:767px){
+  .scc .scc-btn{opacity:var(--scc-o,.72)}
+  .scc.sc-pulse .scc-btn{animation:none}
+}
+</style>
+<script>
+(function(){
+  'use strict';
+  function init(){
+    var c=document.getElementById('scc'); if(!c||c.__scLine) return; c.__scLine=true;
+    var btn=c.querySelector('.scc-btn'); if(!btn) return;
+    var mobile=window.matchMedia('(max-width: 767px)');
+    var LINE=70, BAND=50, scheduled=false;
+    function update(){
+      scheduled=false;
+      if(!mobile.matches){ c.style.removeProperty('--scc-o'); return; }
+      if(c.classList.contains('play')){ c.style.setProperty('--scc-o','.72'); return; }
+      var r=btn.getBoundingClientRect();
+      var above=(window.innerHeight-LINE)-(r.top+r.height/2);   // positivo cuando «Credits» ya ha subido de la línea
+      var o=0.72*Math.max(0,Math.min(1,above/BAND));
+      c.style.setProperty('--scc-o',o.toFixed(3));
+    }
+    function schedule(){ if(scheduled) return; scheduled=true; requestAnimationFrame(update); }
+    window.addEventListener('scroll',schedule,{passive:true});
+    window.addEventListener('resize',schedule);
+    window.addEventListener('pageshow',schedule);
+    if(mobile.addEventListener) mobile.addEventListener('change',schedule);
+    new MutationObserver(schedule).observe(c,{attributes:true,attributeFilter:['class']});
+    if('ResizeObserver' in window){ var ro=new ResizeObserver(schedule); ro.observe(c); var p=document.getElementById('page'); if(p) ro.observe(p); }
+    schedule(); setTimeout(schedule,1000); setTimeout(schedule,4000);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init,{once:true}); else init();
+})();
+</script>
+<!-- /sc-credits-line -->
